@@ -22,7 +22,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Expose Firebase functions globally for the app logic
         window.db = db;
         window.colIdeas = collection(db, "ideas");
         window.colTodos = collection(db, "todos");
@@ -32,7 +31,6 @@
         window.onSnapshot = onSnapshot;
         window.getDocs = getDocs;
 
-        // Initialize real-time listeners once script loads
         window.initFirebaseSync();
     </script>
 </head>
@@ -335,8 +333,9 @@
 
     <div id="todoModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl">
-            <h2 class="text-lg font-bold text-white mb-4">Add New Task</h2>
+            <h2 id="todoModalHeaderTitle" class="text-lg font-bold text-white mb-4">Add New Task</h2>
             <form onsubmit="saveTodoForm(event)" class="space-y-4">
+                <input type="hidden" id="editingTodoId" value="">
                 <div>
                     <label class="block text-xs font-medium text-slate-400 mb-1">Task Title</label>
                     <input type="text" id="todoModalTitle" required placeholder="e.g., Review analytics dataset" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
@@ -370,7 +369,7 @@
                 </div>
                 <div class="flex justify-end space-x-3 pt-4 border-t border-slate-800">
                     <button type="button" onclick="closeTodoModal()" class="px-4 py-2 rounded-lg text-sm text-slate-400 hover:text-white transition">Cancel</button>
-                    <button type="submit" class="px-4 py-2 rounded-lg text-sm bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition shadow">Save Task</button>
+                    <button type="submit" id="todoModalSubmitBtn" class="px-4 py-2 rounded-lg text-sm bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition shadow">Save Task</button>
                 </div>
             </form>
         </div>
@@ -387,7 +386,6 @@
 
         // Real-time Firebase Sync Initializer
         window.initFirebaseSync = function() {
-            // Listen to Ideas collection in Firestore
             window.onSnapshot(window.colIdeas, (snapshot) => {
                 ideas = [];
                 snapshot.forEach((docSnap) => {
@@ -397,7 +395,6 @@
                 refreshActiveView();
             });
 
-            // Listen to Todos collection in Firestore
             window.onSnapshot(window.colTodos, (snapshot) => {
                 todos = [];
                 snapshot.forEach((docSnap) => {
@@ -451,14 +448,10 @@
                         const imported = JSON.parse(e.target.result);
                         if (imported && typeof imported === 'object') {
                             if (imported.ideas) {
-                                for (let item of imported.ideas) {
-                                    await saveIdeaToCloud(item);
-                                }
+                                for (let item of imported.ideas) { await saveIdeaToCloud(item); }
                             }
                             if (imported.todos) {
-                                for (let item of imported.todos) {
-                                    await saveTodoToCloud(item);
-                                }
+                                for (let item of imported.todos) { await saveTodoToCloud(item); }
                             }
                         }
                         switchTab('gateway');
@@ -534,7 +527,10 @@
                                     ${t.desc ? `<p class="text-[11px] text-slate-400 mt-1 leading-relaxed">${t.desc}</p>` : ''}
                                 </div>
                             </div>
-                            <button onclick="deleteTodo('${t.id}')" class="text-slate-600 hover:text-rose-400 transition">×</button>
+                            <div class="flex items-center space-x-1">
+                                <button onclick="openEditTodoModal('${t.id}')" class="text-slate-400 hover:text-emerald-300 text-xs px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800">Edit</button>
+                                <button onclick="deleteTodo('${t.id}')" class="text-rose-400 hover:text-rose-300 text-xs px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800">×</button>
+                            </div>
                         </div>
                         <div class="flex items-center justify-between text-[10px] pt-2 border-t border-slate-900">
                             <span class="px-2 py-0.5 rounded border ${t.priority === 'High' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : t.priority === 'Medium' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-slate-800 text-slate-400 border-slate-700'}">${t.priority}</span>
@@ -546,10 +542,28 @@
         }
 
         function openTodoModal() {
+            document.getElementById('editingTodoId').value = '';
+            document.getElementById('todoModalHeaderTitle').innerText = 'Add New Task';
+            document.getElementById('todoModalSubmitBtn').innerText = 'Save Task';
             document.getElementById('todoModalTitle').value = '';
             document.getElementById('todoModalDesc').value = '';
             document.getElementById('todoModalDeadline').value = '';
             document.getElementById('todoModalBusiness').value = 'Skills';
+            document.getElementById('todoModalPriority').value = 'Medium';
+            document.getElementById('todoModal').classList.remove('hidden');
+        }
+
+        function openEditTodoModal(id) {
+            const task = todos.find(t => t.id === id);
+            if (!task) return;
+            document.getElementById('editingTodoId').value = task.id;
+            document.getElementById('todoModalHeaderTitle').innerText = 'Edit Task';
+            document.getElementById('todoModalSubmitBtn').innerText = 'Update Task';
+            document.getElementById('todoModalTitle').value = task.title || '';
+            document.getElementById('todoModalBusiness').value = task.business || 'Skills';
+            document.getElementById('todoModalDesc').value = task.desc || '';
+            document.getElementById('todoModalPriority').value = task.priority || 'Medium';
+            document.getElementById('todoModalDeadline').value = task.deadline || '';
             document.getElementById('todoModal').classList.remove('hidden');
         }
 
@@ -559,23 +573,37 @@
 
         async function saveTodoForm(e) {
             e.preventDefault();
+            const editingId = document.getElementById('editingTodoId').value;
             const title = document.getElementById('todoModalTitle').value;
             const business = document.getElementById('todoModalBusiness').value;
             const desc = document.getElementById('todoModalDesc').value;
             const priority = document.getElementById('todoModalPriority').value;
             const deadline = document.getElementById('todoModalDeadline').value;
 
-            const newTodo = {
-                id: Date.now().toString(),
-                title,
-                business,
-                desc,
-                completed: false,
-                priority,
-                deadline
-            };
+            let todoToSave;
+            if (editingId) {
+                const existing = todos.find(t => t.id === editingId);
+                if (existing) {
+                    existing.title = title;
+                    existing.business = business;
+                    existing.desc = desc;
+                    existing.priority = priority;
+                    existing.deadline = deadline;
+                    todoToSave = existing;
+                }
+            } else {
+                todoToSave = {
+                    id: Date.now().toString(),
+                    title,
+                    business,
+                    desc,
+                    completed: false,
+                    priority,
+                    deadline
+                };
+            }
 
-            await saveTodoToCloud(newTodo);
+            await saveTodoToCloud(todoToSave);
             closeTodoModal();
         }
 
@@ -764,20 +792,14 @@
             const current = ideas.find(i => i.id === activeIdeaId);
             if (!current || !current.scripts) return;
             const script = current.scripts.find(s => s.id === scriptId);
-            if (script) { 
-                script.name = newName; 
-                await saveIdeaToCloud(current); 
-            }
+            if (script) { script.name = newName; await saveIdeaToCloud(current); }
         }
 
         async function updateScriptContent(scriptId, newContent) {
             const current = ideas.find(i => i.id === activeIdeaId);
             if (!current || !current.scripts) return;
             const script = current.scripts.find(s => s.id === scriptId);
-            if (script) { 
-                script.content = newContent; 
-                await saveIdeaToCloud(current); 
-            }
+            if (script) { script.content = newContent; await saveIdeaToCloud(current); }
         }
 
         async function deleteScriptVersion(scriptId) {
@@ -831,10 +853,7 @@
         function setActiveIdea(id) { activeIdeaId = id; switchTab('generator'); }
         async function updateStatus(newStatus) {
             const current = ideas.find(i => i.id === activeIdeaId);
-            if (current) { 
-                current.status = newStatus; 
-                await saveIdeaToCloud(current); 
-            }
+            if (current) { current.status = newStatus; await saveIdeaToCloud(current); }
         }
 
         function copyGeminiPrompt() {
