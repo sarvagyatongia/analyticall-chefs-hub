@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analyticall Chefs - Command Center</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -36,6 +38,7 @@
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col">
 
+    <!-- Header -->
     <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur sticky top-0 z-30 px-6 py-3.5 flex flex-col md:flex-row items-center justify-between gap-4">
         <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('gateway')">
             <div class="h-10 w-12 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center px-1.5 shadow-lg shadow-emerald-500/10">
@@ -73,8 +76,10 @@
         </div>
     </header>
 
+    <!-- Main Container -->
     <main class="flex-1 max-w-7xl w-full mx-auto p-6 flex flex-col justify-center">
         
+        <!-- Gateway Launchpad View -->
         <div id="view-gateway" class="flex flex-col items-center justify-center space-y-8 py-10">
             <div class="text-center space-y-2 max-w-xl">
                 <h2 class="text-2xl font-bold tracking-tight text-white">Select Your Workspace</h2>
@@ -110,55 +115,81 @@
             </div>
         </div>
 
+        <!-- To-Do Hub View -->
         <div id="view-todos" class="hidden flex-col flex-1 space-y-6">
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
                 <button onclick="switchTab('gateway')" class="text-xs text-emerald-400 hover:text-emerald-300 flex items-center space-x-1 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg transition">
                     <span>← Back to Command Center</span>
                 </button>
-                <button onclick="openTodoModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-medium transition shadow">
-                    + Add New Task
-                </button>
+                
+                <!-- Category Focus Filters & View Switcher -->
+                <div class="flex items-center space-x-2 flex-wrap gap-y-2 justify-center">
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-1 flex items-center space-x-1">
+                        <button onclick="setTodoFilter('All')" id="todoFilterAll" class="todo-filter-btn px-3 py-1 rounded-lg text-xs font-medium transition bg-emerald-600 text-white">All Columns</button>
+                        <button onclick="setTodoFilter('Skills')" id="todoFilterSkills" class="todo-filter-btn px-3 py-1 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white">Skills</button>
+                        <button onclick="setTodoFilter('Abroad')" id="todoFilterAbroad" class="todo-filter-btn px-3 py-1 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white">Abroad</button>
+                        <button onclick="setTodoFilter('Faculty')" id="todoFilterFaculty" class="todo-filter-btn px-3 py-1 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white">Faculty</button>
+                        <button onclick="setTodoFilter('Financial Analytics')" id="todoFilterFinancial Analytics" class="todo-filter-btn px-3 py-1 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white">Financial Analytics</button>
+                        <button onclick="setTodoFilter('General')" id="todoFilterGeneral" class="todo-filter-btn px-3 py-1 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white">General</button>
+                    </div>
+
+                    <button onclick="openTodoModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-medium transition shadow">
+                        + Add New Task
+                    </button>
+                </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 flex-1">
-                <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col space-y-3">
-                    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400">Skills</h3>
-                        <span id="countSkills" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">0</span>
+            <!-- Kanban Boards / Focused Single Column Container -->
+            <div id="todoColumnsContainer" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 flex-1">
+                <div class="todo-col" data-biz="Skills" id="col-Skills">
+                    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col space-y-3 h-full">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400">Skills</h3>
+                            <span id="countSkills" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">0</span>
+                        </div>
+                        <div id="fullSkillsList" class="space-y-3 overflow-y-auto max-h-[60vh]"></div>
                     </div>
-                    <div id="fullSkillsList" class="space-y-3 overflow-y-auto max-h-[60vh]"></div>
                 </div>
-                <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col space-y-3">
-                    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400">Abroad</h3>
-                        <span id="countAbroad" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">0</span>
+                <div class="todo-col" data-biz="Abroad" id="col-Abroad">
+                    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col space-y-3 h-full">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400">Abroad</h3>
+                            <span id="countAbroad" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">0</span>
+                        </div>
+                        <div id="fullAbroadList" class="space-y-3 overflow-y-auto max-h-[60vh]"></div>
                     </div>
-                    <div id="fullAbroadList" class="space-y-3 overflow-y-auto max-h-[60vh]"></div>
                 </div>
-                <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col space-y-3">
-                    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400">Faculty</h3>
-                        <span id="countFaculty" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">0</span>
+                <div class="todo-col" data-biz="Faculty" id="col-Faculty">
+                    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col space-y-3 h-full">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400">Faculty</h3>
+                            <span id="countFaculty" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">0</span>
+                        </div>
+                        <div id="fullFacultyList" class="space-y-3 overflow-y-auto max-h-[60vh]"></div>
                     </div>
-                    <div id="fullFacultyList" class="space-y-3 overflow-y-auto max-h-[60vh]"></div>
                 </div>
-                <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col space-y-3">
-                    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-blue-400">Financial Analytics</h3>
-                        <span id="countFinancial Analytics" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">0</span>
+                <div class="todo-col" data-biz="Financial Analytics" id="col-Financial Analytics">
+                    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col space-y-3 h-full">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-blue-400">Financial Analytics</h3>
+                            <span id="countFinancial Analytics" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">0</span>
+                        </div>
+                        <div id="fullFinancial AnalyticsList" class="space-y-3 overflow-y-auto max-h-[60vh]"></div>
                     </div>
-                    <div id="fullFinancial AnalyticsList" class="space-y-3 overflow-y-auto max-h-[60vh]"></div>
                 </div>
-                <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col space-y-3">
-                    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-purple-400">General</h3>
-                        <span id="countGeneral" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">0</span>
+                <div class="todo-col" data-biz="General" id="col-General">
+                    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col space-y-3 h-full">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-purple-400">General</h3>
+                            <span id="countGeneral" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">0</span>
+                        </div>
+                        <div id="fullGeneralList" class="space-y-3 overflow-y-auto max-h-[60vh]"></div>
                     </div>
-                    <div id="fullGeneralList" class="space-y-3 overflow-y-auto max-h-[60vh]"></div>
                 </div>
             </div>
         </div>
 
+        <!-- Vault View -->
         <div id="view-vault" class="hidden flex-col flex-1 space-y-6">
             <div class="flex items-center justify-between">
                 <button onclick="switchTab('gateway')" class="text-xs text-emerald-400 hover:text-emerald-300 flex items-center space-x-1 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg transition">
@@ -180,6 +211,7 @@
             <div id="ideasGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
         </div>
 
+        <!-- Generator View -->
         <div id="view-generator" class="hidden flex-col flex-1">
             <div class="mb-4 flex items-center justify-between">
                 <button onclick="switchTab('vault')" class="text-xs text-emerald-400 hover:text-emerald-300 flex items-center space-x-1 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg transition">
@@ -197,6 +229,7 @@
             </div>
         </div>
 
+        <!-- Calendar View -->
         <div id="view-calendar" class="hidden flex-col flex-1 space-y-6">
             <div class="flex items-center justify-between">
                 <button onclick="switchTab('vault')" class="text-xs text-emerald-400 hover:text-emerald-300 flex items-center space-x-1 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg transition">
@@ -248,6 +281,7 @@
 
     </main>
 
+    <!-- Modal for New Idea -->
     <div id="ideaModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
             <h2 id="modalHeaderTitle" class="text-lg font-bold text-white mb-4">Capture & Schedule Content</h2>
@@ -338,6 +372,7 @@
         </div>
     </div>
 
+    <!-- Modal for To-Do Items -->
     <div id="todoModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl">
             <h2 id="todoModalHeaderTitle" class="text-lg font-bold text-white mb-4">Add New Task</h2>
@@ -383,10 +418,12 @@
         </div>
     </div>
 
+    <!-- Application Script Logic -->
     <script>
         let ideas = [];
         let todos = [];
         let activeBusiness = 'All';
+        let activeTodoFilter = 'All';
         let activeIdeaId = null;
         let currentTab = 'gateway';
 
@@ -510,6 +547,37 @@
             return [...list].sort((a, b) => (a.completed === b.completed ? 0 : a.completed ? 1 : -1));
         }
 
+        function setTodoFilter(filter) {
+            activeTodoFilter = filter;
+            ['All', 'Skills', 'Abroad', 'Faculty', 'Financial Analytics', 'General'].forEach(f => {
+                const btn = document.getElementById('todoFilter' + f.replace(' ', ''));
+                if (btn) {
+                    btn.className = (f === filter)
+                        ? "todo-filter-btn px-3 py-1 rounded-lg text-xs font-medium transition bg-emerald-600 text-white"
+                        : "todo-filter-btn px-3 py-1 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white";
+                }
+            });
+
+            const cols = document.querySelectorAll('.todo-col');
+            cols.forEach(col => {
+                const biz = col.getAttribute('data-biz');
+                if (filter === 'All' || biz === filter) {
+                    col.style.display = 'block';
+                } else {
+                    col.style.display = 'none';
+                }
+            });
+
+            const container = document.getElementById('todoColumnsContainer');
+            if (filter === 'All') {
+                container.className = "grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 flex-1";
+            } else {
+                container.className = "grid grid-cols-1 max-w-xl mx-auto w-full flex-1";
+            }
+
+            renderTodos();
+        }
+
         function renderTodos() {
             ['Skills', 'Abroad', 'Faculty', 'Financial Analytics', 'General'].forEach(biz => {
                 const container = document.getElementById('full' + biz + 'List');
@@ -555,7 +623,7 @@
             document.getElementById('todoModalTitle').value = '';
             document.getElementById('todoModalDesc').value = '';
             document.getElementById('todoModalDeadline').value = '';
-            document.getElementById('todoModalBusiness').value = 'Skills';
+            document.getElementById('todoModalBusiness').value = activeTodoFilter !== 'All' ? activeTodoFilter : 'Skills';
             document.getElementById('todoModalPriority').value = 'Medium';
             document.getElementById('todoModal').classList.remove('hidden');
         }
