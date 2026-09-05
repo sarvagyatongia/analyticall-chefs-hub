@@ -105,7 +105,7 @@
                     <div class="space-y-2">
                         <span class="text-[10px] font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2.5 py-1 rounded-full uppercase">Content</span>
                         <h3 class="text-lg font-bold text-white group-hover:text-indigo-300 transition">Idea Vault</h3>
-                        <p class="text-xs text-slate-400">Manage raw thoughts, generate AI scripts, and calendar.</p>
+                        <p class="text-xs text-slate-400">Manage raw thoughts, generate dynamic AI prompts, and calendar.</p>
                     </div>
                     <div class="pt-3 border-t border-slate-800 text-xs font-medium text-indigo-400 flex justify-between">
                         <span id="gatewayIdeaCount">0 ideas</span>
@@ -935,23 +935,37 @@
             const current = ideas.find(i => i.id === activeIdeaId);
             if (!current) { main.innerHTML = `<div class="flex-1 flex items-center justify-center text-slate-500">No ideas available.</div>`; return; }
 
-            const promptText = `Act as an expert scriptwriter for Analyticall Chefs. Create a highly engaging 45-second video script and prompt package for the following concept:
+            const postTypes = current.postTypes || ['Short Form'];
+            
+            // Build dynamic guidelines based on selected post types
+            let specificGuidelines = '';
+            if (postTypes.includes('Short Form')) {
+                specificGuidelines += `- **Short Form Guidelines:** Maximum duration constraint is 45 seconds. Hook must be delivered within the first 3 seconds.\n`;
+            }
+            if (postTypes.includes('Long Form')) {
+                specificGuidelines += `- **Long Form Guidelines:** Video length should be at least 7-8 minutes depending on the depth of the topic. Incorporate multiple engagement hooks throughout the structure.\n`;
+            }
+            if (postTypes.includes('Static')) {
+                specificGuidelines += `- **Static / Carousel Guidelines:** Generate a structured carousel or image layout plan. Before generating the final visual asset, explicitly list clarifying questions if any details are missing.\n`;
+            }
+
+            const promptText = `Act as an expert content creator and strategist for Analyticall Chefs. Create a highly engaging content production package for the following concept:
 Title: ${current.title}
 Business Domain: ${(current.businesses || []).join(', ')}
-Post Type: ${(current.postTypes || ['Short Form']).join(', ')}
+Post Type(s): ${postTypes.join(', ')}
 Raw Notes & Context: ${current.notes || 'None provided'}
 
-Guidelines:
-- Maximum duration constraint: 45 seconds.
-- Focus strictly on practical skills, career building, and student thriving (do not mention admissions or consultancy terms until Phase 4).
-- Structure into a powerful Hook (0-5s), Core Value (5-35s), and Actionable CTA (35-45s).`;
+Specific Post Type Guidelines:
+${specificGuidelines}
+General Rules:
+- Focus strictly on practical skills, career building, and student thriving (do not mention admissions or consultancy terms until Phase 4).`;
 
             main.innerHTML = `
                 <div class="space-y-6">
                     <div class="flex items-center justify-between border-b border-slate-800 pb-4">
                         <div>
                             <div class="flex gap-1 mb-1 flex-wrap">
-                                ${(current.postTypes || ['Short Form']).map(pt => `<span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded">${pt}</span>`).join('')}
+                                ${postTypes.map(pt => `<span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded">${pt}</span>`).join('')}
                                 ${(current.businesses || []).map(b => `<span class="text-[10px] bg-emerald-950/60 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded">${b}</span>`).join('')}
                             </div>
                             <h2 class="text-2xl font-bold text-white">${current.title}</h2>
@@ -970,7 +984,7 @@ Guidelines:
                     </div>
                     <div class="space-y-2">
                         <div class="flex items-center justify-between">
-                            <h3 class="text-xs font-semibold uppercase tracking-wider text-emerald-400">🤖 Detailed Gemini Script Prompt</h3>
+                            <h3 class="text-xs font-semibold uppercase tracking-wider text-emerald-400">🤖 Context-Aware Gemini Prompt</h3>
                             <button onclick="navigator.clipboard.writeText(document.getElementById('promptBox').innerText); alert('Prompt copied to clipboard!');" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1 rounded transition">Copy Prompt</button>
                         </div>
                         <div id="promptBox" class="bg-slate-950 border border-emerald-500/30 rounded-xl p-4 text-xs font-mono text-slate-300 whitespace-pre-wrap leading-relaxed">${promptText}</div>
