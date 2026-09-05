@@ -105,10 +105,10 @@
                     <div class="space-y-2">
                         <span class="text-[10px] font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2.5 py-1 rounded-full uppercase">Content</span>
                         <h3 class="text-lg font-bold text-white group-hover:text-indigo-300 transition">Idea Vault</h3>
-                        <p class="text-xs text-slate-400">Manage raw thoughts, generate dynamic AI prompts, and calendar.</p>
+                        <p class="text-xs text-slate-400">Manage raw thoughts, generate dynamic AI prompts, and archive.</p>
                     </div>
                     <div class="pt-3 border-t border-slate-800 text-xs font-medium text-indigo-400 flex justify-between">
-                        <span id="gatewayIdeaCount">0 ideas</span>
+                        <span id="gatewayIdeaCount">0 active ideas</span>
                         <span>Open →</span>
                     </div>
                 </div>
@@ -167,6 +167,9 @@
                     <span>← Back</span>
                 </button>
                 <div class="flex items-center space-x-2">
+                    <button onclick="openIdeaArchiveModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3.5 py-2 rounded-xl text-xs font-medium transition flex items-center space-x-1.5">
+                        <span>📦 Idea Archive</span>
+                    </button>
                     <button onclick="switchTab('calendar')" class="bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 px-3.5 py-2 rounded-xl text-xs font-medium transition">📅 Calendar Schedule</button>
                     <button onclick="openModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-medium transition shadow">+ New Idea</button>
                 </div>
@@ -186,7 +189,10 @@
                 <button onclick="switchTab('vault')" class="text-xs text-emerald-400 hover:text-emerald-300 flex items-center space-x-1 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg transition">
                     <span>← Back to Vault</span>
                 </button>
-                <button onclick="openEditModal(activeIdeaId)" class="text-xs text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-lg transition">Edit Idea</button>
+                <div class="flex items-center space-x-2">
+                    <button onclick="toggleIdeaArchiveFromGenerator()" id="generatorArchiveBtn" class="text-xs text-amber-400 hover:text-amber-300 bg-amber-950/40 border border-amber-500/30 px-3 py-1.5 rounded-lg transition">📦 Archive Idea</button>
+                    <button onclick="openEditModal(activeIdeaId)" class="text-xs text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-lg transition">Edit Idea</button>
+                </div>
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1">
                 <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex flex-col space-y-2 h-[calc(100vh-220px)] overflow-y-auto" id="briefSidebar"></div>
@@ -288,7 +294,7 @@
 
     </main>
 
-    <!-- Modal for Completed Archive Vault -->
+    <!-- Modal for Completed Task Archive -->
     <div id="archiveModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -301,6 +307,23 @@
             <div id="archiveListContainer" class="space-y-3 overflow-y-auto flex-1 pr-1"></div>
             <div class="flex justify-end pt-3 border-t border-slate-800">
                 <button onclick="closeArchiveModal()" class="px-4 py-2 rounded-lg text-sm bg-slate-800 text-slate-300 hover:text-white transition">Close Archive</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Executed Idea Archive Vault -->
+    <div id="ideaArchiveModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+                    <span>📦 Executed Idea Archive</span>
+                </h2>
+                <span id="ideaArchiveTotalCount" class="text-xs bg-slate-800 px-2.5 py-1 rounded text-slate-300">0 archived</span>
+            </div>
+            <p class="text-xs text-slate-400">Here are all your executed and published ideas stored away so your active Idea Vault stays clean and focused.</p>
+            <div id="ideaArchiveListContainer" class="space-y-3 overflow-y-auto flex-1 pr-1"></div>
+            <div class="flex justify-end pt-3 border-t border-slate-800">
+                <button onclick="closeIdeaArchiveModal()" class="px-4 py-2 rounded-lg text-sm bg-slate-800 text-slate-300 hover:text-white transition">Close Archive</button>
             </div>
         </div>
     </div>
@@ -587,11 +610,12 @@
 
         function renderGateway() {
             const pending = todos.filter(t => !t.completed && !t.archived).length;
+            const activeIdeas = ideas.filter(i => !i.archived).length;
             const pendingEl = document.getElementById('gatewayPendingCount');
             const ideaEl = document.getElementById('gatewayIdeaCount');
             const xpEl = document.getElementById('gatewayXpDisplay');
             if (pendingEl) pendingEl.innerText = `${pending} pending`;
-            if (ideaEl) ideaEl.innerText = `${ideas.length} ideas`;
+            if (ideaEl) ideaEl.innerText = `${activeIdeas} active ideas`;
             if (xpEl) {
                 const completedCount = todos.filter(t => t.completed || t.archived).length;
                 const xp = completedCount * 25;
@@ -605,16 +629,6 @@
             if (isNaN(dateObj)) return deadlineStr;
             const options = { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
             return dateObj.toLocaleDateString('en-US', options);
-        }
-
-        function getCountdown(deadlineStr) {
-            if (!deadlineStr) return '';
-            const diff = new Date(deadlineStr) - new Date();
-            if (diff <= 0) return '<span class="text-rose-400 font-semibold">Overdue</span>';
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            if (days > 0) return `<span class="text-emerald-400">${days}d ${hours}h left</span>`;
-            return `<span class="text-amber-400">${hours}h left</span>`;
         }
 
         function getSortedTodos(list) { return [...list].sort((a, b) => (a.completed === b.completed ? 0 : a.completed ? 1 : -1)); }
@@ -695,6 +709,62 @@
                         ${t.desc ? `<p class="text-[11px] text-slate-400">${t.desc}</p>` : ''}
                     </div>
                     <button onclick="toggleArchive('${t.id}')" class="text-xs bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-slate-700 px-3 py-1.5 rounded-lg transition">Restore</button>
+                </div>
+            `).join('');
+        }
+
+        // Idea Archive Functions
+        async function toggleIdeaArchive(id) {
+            const idea = ideas.find(i => i.id === id);
+            if (idea) {
+                idea.archived = !idea.archived;
+                await saveIdeaToCloud(idea);
+                renderIdeaArchiveModal();
+                renderVault();
+            }
+        }
+
+        async function toggleIdeaArchiveFromGenerator() {
+            if (!activeIdeaId) return;
+            const idea = ideas.find(i => i.id === activeIdeaId);
+            if (idea) {
+                idea.archived = !idea.archived;
+                await saveIdeaToCloud(idea);
+                alert(idea.archived ? "Idea archived successfully!" : "Idea restored from archive!");
+                switchTab('vault');
+            }
+        }
+
+        function openIdeaArchiveModal() {
+            renderIdeaArchiveModal();
+            document.getElementById('ideaArchiveModal').classList.remove('hidden');
+        }
+        function closeIdeaArchiveModal() { document.getElementById('ideaArchiveModal').classList.add('hidden'); }
+
+        function renderIdeaArchiveModal() {
+            const container = document.getElementById('ideaArchiveListContainer');
+            const countBadge = document.getElementById('ideaArchiveTotalCount');
+            if (!container || !countBadge) return;
+
+            const archivedIdeas = ideas.filter(i => i.archived);
+            countBadge.innerText = `${archivedIdeas.length} archived`;
+
+            if (archivedIdeas.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500 italic py-6 text-center">No executed ideas archived yet.</p>`;
+                return;
+            }
+
+            container.innerHTML = archivedIdeas.map(i => `
+                <div class="bg-slate-950 border border-slate-800 p-3.5 rounded-xl space-y-2 flex items-center justify-between">
+                    <div class="space-y-1">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-[9px] bg-emerald-950 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded">${(i.businesses || []).join(', ')}</span>
+                            <span class="text-[10px] text-slate-400 uppercase">${i.status}</span>
+                        </div>
+                        <h4 class="text-xs font-semibold text-slate-200">${i.title}</h4>
+                        ${i.notes ? `<p class="text-[11px] text-slate-400 line-clamp-1">${i.notes}</p>` : ''}
+                    </div>
+                    <button onclick="toggleIdeaArchive('${i.id}')" class="text-xs bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-slate-700 px-3 py-1.5 rounded-lg transition">Restore</button>
                 </div>
             `).join('');
         }
@@ -880,13 +950,14 @@
             if (!grid) return;
             
             const filtered = ideas.filter(idea => {
+                if (idea.archived) return false;
                 const matchesSearch = idea.title.toLowerCase().includes(query) || idea.notes.toLowerCase().includes(query);
                 const matchesBiz = activeBusiness === 'All' || (idea.businesses && idea.businesses.includes(activeBusiness));
                 return matchesSearch && matchesBiz;
             });
 
             if (filtered.length === 0) {
-                grid.innerHTML = `<div class="col-span-full text-center py-20 bg-slate-900/30 border border-slate-800 rounded-2xl"><h3 class="text-base font-medium text-slate-300">No ideas found</h3></div>`;
+                grid.innerHTML = `<div class="col-span-full text-center py-20 bg-slate-900/30 border border-slate-800 rounded-2xl"><h3 class="text-base font-medium text-slate-300">No active ideas found</h3></div>`;
                 return;
             }
 
@@ -896,6 +967,7 @@
                         <div class="flex items-center justify-between mb-3">
                             <span class="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">${idea.status}</span>
                             <div class="flex items-center space-x-1">
+                                <button onclick="event.stopPropagation(); toggleIdeaArchive('${idea.id}')" class="text-slate-400 hover:text-amber-400 transition p-1" title="Archive Idea">📦</button>
                                 <button onclick="openEditModalFromGrid(event, '${idea.id}')" class="text-slate-400 hover:text-emerald-300 transition p-1">✏️</button>
                                 <button onclick="deleteIdea(event, '${idea.id}')" class="text-slate-600 hover:text-rose-400 transition p-1">🗑️</button>
                             </div>
@@ -918,13 +990,14 @@
         function renderGenerator() {
             const sidebar = document.getElementById('briefSidebar');
             const main = document.getElementById('briefMainContent');
+            const archiveBtn = document.getElementById('generatorArchiveBtn');
             if (!sidebar || !main) return;
 
             if (ideas.length > 0 && !ideas.some(i => i.id === activeIdeaId)) { activeIdeaId = ideas[0].id; }
 
             sidebar.innerHTML = `
                 <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400 px-2 mb-2">Select Idea</h2>
-                ${ideas.map(i => `
+                ${ideas.filter(i => !i.archived).map(i => `
                     <button onclick="setActiveIdea('${i.id}')" class="w-full text-left px-3.5 py-3 rounded-lg text-sm transition flex flex-col space-y-1 ${activeIdeaId === i.id ? 'bg-emerald-600/20 border border-emerald-500/40 text-white' : 'hover:bg-slate-800 text-slate-300 border border-transparent'}">
                         <span class="font-medium truncate">${i.title}</span>
                         <span class="text-[10px] text-slate-400">${(i.businesses || []).join(', ')}</span>
@@ -935,9 +1008,12 @@
             const current = ideas.find(i => i.id === activeIdeaId);
             if (!current) { main.innerHTML = `<div class="flex-1 flex items-center justify-center text-slate-500">No ideas available.</div>`; return; }
 
+            if (archiveBtn) {
+                archiveBtn.innerText = current.archived ? "📦 Restore Idea" : "📦 Archive Idea";
+            }
+
             const postTypes = current.postTypes || ['Short Form'];
             
-            // Build dynamic guidelines based on selected post types
             let specificGuidelines = '';
             if (postTypes.includes('Short Form')) {
                 specificGuidelines += `- **Short Form Guidelines:** Maximum duration constraint is 45 seconds. Hook must be delivered within the first 3 seconds.\n`;
@@ -1006,6 +1082,7 @@ General Rules:
 
             let rows = [];
             ideas.forEach(i => {
+                if (i.archived) return;
                 const types = (i.postTypes && i.postTypes.length > 0) ? i.postTypes : ['Short Form'];
                 const businesses = (i.businesses && i.businesses.length > 0) ? i.businesses : ['General'];
                 types.forEach(pt => {
@@ -1185,7 +1262,7 @@ General Rules:
                     entryToSave = existing;
                 }
             } else {
-                entryToSave = { id: Date.now().toString(), title, businesses: selectedBiz, postTypes: selectedPostTypes.length > 0 ? selectedPostTypes : ['Short Form'], status, scheduleTime, notes, youtubeUrls, scripts: [] };
+                entryToSave = { id: Date.now().toString(), title, businesses: selectedBiz, postTypes: selectedPostTypes.length > 0 ? selectedPostTypes : ['Short Form'], status, scheduleTime, notes, youtubeUrls, scripts: [], archived: false };
                 activeIdeaId = entryToSave.id;
             }
             await saveIdeaToCloud(entryToSave);
