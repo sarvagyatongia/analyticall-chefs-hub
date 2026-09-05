@@ -930,7 +930,6 @@
                 if (item.completed) item.archived = true;
                 await saveTodoToCloud(item);
                 
-                // Force immediate refresh of Today's focus and progress tracker views if open
                 if (currentTab === 'todos') {
                     renderTodaysFocus();
                     renderTodos();
@@ -1265,7 +1264,7 @@ General Rules:
         }
 
         function openEditModalFromGrid(e, id) { e.stopPropagation(); openEditModal(id); }
-        function closeModal() { document.getElementById('ideaModal'].classList.add('hidden'); }
+        function closeModal() { document.getElementById('ideaModal').classList.add('hidden'); }
 
         async function saveIdeaForm(e) {
             e.preventDefault();
