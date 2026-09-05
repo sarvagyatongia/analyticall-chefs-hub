@@ -926,6 +926,8 @@
                 item.completed = !item.completed;
                 if (item.completed) item.archived = true;
                 await saveTodoToCloud(item);
+                // Force immediate refresh if currently on progress view
+                if (currentTab === 'progress') { renderProgressTracker(); }
             }
         }
 
@@ -1116,10 +1118,15 @@ General Rules:
             const focusDone = focusTasks.filter(t => t.completed).length;
             const dailyPct = focusTotal > 0 ? Math.round((focusDone / focusTotal) * 100) : 0;
 
-            document.getElementById('dailyEfficiencyText').innerText = `${dailyPct}% Completed (${focusDone}/${focusTotal})`;
-            document.getElementById('dailyProgressBar').style.width = `${dailyPct}%`;
-            document.getElementById('dailyCompletedCountText').innerText = `${focusDone} completed today`;
-            document.getElementById('dailyRemainingCountText').innerText = `${focusTotal - focusDone} remaining today`;
+            const dailyEffText = document.getElementById('dailyEfficiencyText');
+            const dailyProgBar = document.getElementById('dailyProgressBar');
+            const dailyCompText = document.getElementById('dailyCompletedCountText');
+            const dailyRemText = document.getElementById('dailyRemainingCountText');
+
+            if (dailyEffText) dailyEffText.innerText = `${dailyPct}% Completed (${focusDone}/${focusTotal})`;
+            if (dailyProgBar) dailyProgBar.style.width = `${dailyPct}%`;
+            if (dailyCompText) dailyCompText.innerText = `${focusDone} completed today`;
+            if (dailyRemText) dailyRemText.innerText = `${focusTotal - focusDone} remaining today`;
 
             const totalTasks = todos.length;
             const completedTasks = todos.filter(t => t.completed || t.archived).length;
@@ -1127,42 +1134,51 @@ General Rules:
             const xp = completedTasks * 25;
             const level = Math.floor(xp / 100) + 1;
 
-            document.getElementById('playerLevelBadge').innerText = `Level ${level} ${level > 2 ? 'Master Builder' : 'Prodigy'}`;
-            document.getElementById('playerXpText').innerText = `${xp} Total XP Earned (${completedTasks} Tasks Completed)`;
-            document.getElementById('overallPercentageText').innerText = `${pct}% Complete (${completedTasks}/${totalTasks} Backlog)`;
-            document.getElementById('overallProgressBar').style.width = `${pct}%`;
+            const lvlBadge = document.getElementById('playerLevelBadge');
+            const xpText = document.getElementById('playerXpText');
+            const overallPctText = document.getElementById('overallPercentageText');
+            const overallProgBar = document.getElementById('overallProgressBar');
+
+            if (lvlBadge) lvlBadge.innerText = `Level ${level} ${level > 2 ? 'Master Builder' : 'Prodigy'}`;
+            if (xpText) xpText.innerText = `${xp} Total XP Earned (${completedTasks} Tasks Completed)`;
+            if (overallPctText) overallPctText.innerText = `${pct}% Complete (${completedTasks}/${totalTasks} Backlog)`;
+            if (overallProgBar) overallProgBar.style.width = `${pct}%`;
 
             const domainGrid = document.getElementById('domainStatsGrid');
-            domainGrid.innerHTML = categories.map(cat => {
-                const catTodos = todos.filter(t => t.business === cat);
-                const catTotal = catTodos.length;
-                const catDone = catTodos.filter(t => t.completed || t.archived).length;
-                const catPct = catTotal > 0 ? Math.round((catDone / catTotal) * 100) : 0;
-                
-                return `
-                    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col space-y-3">
-                        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-                            <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider">${cat}</h4>
-                            <span class="text-[10px] text-slate-400">${catDone}/${catTotal} Done</span>
-                        </div>
-                        <div class="space-y-1">
-                            <div class="flex justify-between text-[11px] text-slate-300">
-                                <span>Efficiency</span>
-                                <span class="font-bold">${catPct}%</span>
+            if (domainGrid) {
+                domainGrid.innerHTML = categories.map(cat => {
+                    const catTodos = todos.filter(t => t.business === cat);
+                    const catTotal = catTodos.length;
+                    const catDone = catTodos.filter(t => t.completed || t.archived).length;
+                    const catPct = catTotal > 0 ? Math.round((catDone / catTotal) * 100) : 0;
+                    
+                    return `
+                        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col space-y-3">
+                            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                                <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider">${cat}</h4>
+                                <span class="text-[10px] text-slate-400">${catDone}/${catTotal} Done</span>
                             </div>
-                            <div class="w-full bg-slate-950 rounded-full h-2 border border-slate-800 overflow-hidden">
-                                <div class="bg-emerald-500 h-full transition-all duration-300" style="width: ${catPct}%"></div>
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-[11px] text-slate-300">
+                                    <span>Efficiency</span>
+                                    <span class="font-bold">${catPct}%</span>
+                                </div>
+                                <div class="w-full bg-slate-950 rounded-full h-2 border border-slate-800 overflow-hidden">
+                                    <div class="bg-emerald-500 h-full transition-all duration-300" style="width: ${catPct}%"></div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                `;
-            }).join('');
+                    `;
+                }).join('');
+            }
             
             generateReport();
         }
 
         function generateReport() {
             const reportContainer = document.getElementById('analyticalReportContent');
+            if (!reportContainer) return;
+
             if (todos.length === 0 && ideas.length === 0) {
                 reportContainer.innerHTML = `<p class="italic text-slate-500">No data available yet. Add tasks and ideas to generate actionable insights.</p>`;
                 return;
@@ -1262,7 +1278,7 @@ General Rules:
                     entryToSave = existing;
                 }
             } else {
-                entryToSave = { id: Date.now().toString(), title, businesses: selectedBiz, postTypes: selectedPostTypes.length > 0 ? selectedPostTypes : ['Short Form'], status, scheduleTime, notes, youtubeUrls, scripts: [], archived: false };
+                entryToSave = { id: Date.now().toString(), title, businesses: selectedBiz, postTypes: selectedPostTypes.length >0 ? selectedPostTypes : ['Short Form'], status, scheduleTime, notes, youtubeUrls, scripts: [], archived: false };
                 activeIdeaId = entryToSave.id;
             }
             await saveIdeaToCloud(entryToSave);
