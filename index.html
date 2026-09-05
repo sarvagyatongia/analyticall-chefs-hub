@@ -27,6 +27,7 @@
         window.db = db;
         window.colIdeas = collection(db, "ideas");
         window.colTodos = collection(db, "todos");
+        window.colMeta = collection(db, "metadata");
         window.setDoc = setDoc;
         window.doc = doc;
         window.deleteDoc = deleteDoc;
@@ -69,9 +70,10 @@
             <button onclick="switchTab('todos')" id="btn-todos" class="px-3 py-1.5 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white hover:bg-slate-800">To-Do Hub</button>
             <button onclick="switchTab('vault')" id="btn-vault" class="px-3 py-1.5 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white hover:bg-slate-800">Idea Vault</button>
             <button onclick="switchTab('calendar')" id="btn-calendar" class="px-3 py-1.5 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white hover:bg-slate-800">Calendar</button>
+            <button onclick="switchTab('progress')" id="btn-progress" class="px-3 py-1.5 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white hover:bg-slate-800">🎮 Anti-Rot Tracker</button>
             
-            <button onclick="openModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow-lg shadow-indigo-600/20">
-                <span>+ New Idea</span>
+            <button onclick="openCategoryManager()" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1">
+                <span>⚙️ Categories</span>
             </button>
         </div>
     </header>
@@ -83,33 +85,43 @@
         <div id="view-gateway" class="flex flex-col items-center justify-center space-y-8 py-10">
             <div class="text-center space-y-2 max-w-xl">
                 <h2 class="text-2xl font-bold tracking-tight text-white">Select Your Workspace</h2>
-                <p class="text-sm text-slate-400">Choose where you want to go. All changes sync in real-time across your devices.</p>
+                <p class="text-sm text-slate-400">Choose where you want to go. Real-time cloud sync active.</p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl">
-                <div onclick="switchTab('todos')" class="group bg-slate-900/80 border border-slate-800 hover:border-emerald-500/60 p-8 rounded-2xl cursor-pointer transition flex flex-col justify-between space-y-6 shadow-xl relative overflow-hidden">
-                    <div class="absolute -right-6 -bottom-6 opacity-5 group-hover:opacity-10 transition text-7xl font-bold">☑</div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
+                <div onclick="switchTab('todos')" class="group bg-slate-900/80 border border-slate-800 hover:border-emerald-500/60 p-6 rounded-2xl cursor-pointer transition flex flex-col justify-between space-y-4 shadow-xl relative overflow-hidden">
                     <div class="space-y-2">
-                        <span class="text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full uppercase tracking-wider">Executive Assistant</span>
-                        <h3 class="text-xl font-bold text-white group-hover:text-emerald-300 transition">To-Do Hub</h3>
-                        <p class="text-xs text-slate-400 leading-relaxed">Manage your daily tasks, check deadlines with live countdown timers, and track actions across Skills, Abroad, Faculty, Financial Analytics, and General.</p>
+                        <span class="text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full uppercase">Tasks</span>
+                        <h3 class="text-lg font-bold text-white group-hover:text-emerald-300 transition">To-Do Hub</h3>
+                        <p class="text-xs text-slate-400">Manage tasks across dynamic categories with focus filters.</p>
                     </div>
-                    <div class="flex items-center justify-between pt-4 border-t border-slate-800/80 text-xs font-medium text-emerald-400">
-                        <span id="gatewayPendingCount">0 pending tasks</span>
-                        <span>Open To-Do Hub →</span>
+                    <div class="pt-3 border-t border-slate-800 text-xs font-medium text-emerald-400 flex justify-between">
+                        <span id="gatewayPendingCount">0 pending</span>
+                        <span>Open →</span>
                     </div>
                 </div>
 
-                <div onclick="switchTab('vault')" class="group bg-slate-900/80 border border-slate-800 hover:border-indigo-500/60 p-8 rounded-2xl cursor-pointer transition flex flex-col justify-between space-y-6 shadow-xl relative overflow-hidden">
-                    <div class="absolute -right-6 -bottom-6 opacity-5 group-hover:opacity-10 transition text-7xl font-bold">💡</div>
+                <div onclick="switchTab('vault')" class="group bg-slate-900/80 border border-slate-800 hover:border-indigo-500/60 p-6 rounded-2xl cursor-pointer transition flex flex-col justify-between space-y-4 shadow-xl relative overflow-hidden">
                     <div class="space-y-2">
-                        <span class="text-[10px] font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2.5 py-1 rounded-full uppercase tracking-wider">Content Engine</span>
-                        <h3 class="text-xl font-bold text-white group-hover:text-indigo-300 transition">Idea Vault & Scripts</h3>
-                        <p class="text-xs text-slate-400 leading-relaxed">Access your raw thoughts, organize multi-version script drafts, copy AI prompt helpers for Gemini, and track your content calendar schedule.</p>
+                        <span class="text-[10px] font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2.5 py-1 rounded-full uppercase">Content</span>
+                        <h3 class="text-lg font-bold text-white group-hover:text-indigo-300 transition">Idea Vault</h3>
+                        <p class="text-xs text-slate-400">Manage raw thoughts, multi-version scripts, and calendar.</p>
                     </div>
-                    <div class="flex items-center justify-between pt-4 border-t border-slate-800/80 text-xs font-medium text-indigo-400">
-                        <span id="gatewayIdeaCount">0 ideas saved</span>
-                        <span>Open Idea Vault →</span>
+                    <div class="pt-3 border-t border-slate-800 text-xs font-medium text-indigo-400 flex justify-between">
+                        <span id="gatewayIdeaCount">0 ideas</span>
+                        <span>Open →</span>
+                    </div>
+                </div>
+
+                <div onclick="switchTab('progress')" class="group bg-slate-900/80 border border-slate-800 hover:border-purple-500/60 p-6 rounded-2xl cursor-pointer transition flex flex-col justify-between space-y-4 shadow-xl relative overflow-hidden">
+                    <div class="space-y-2">
+                        <span class="text-[10px] font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2.5 py-1 rounded-full uppercase">Anti-Rot</span>
+                        <h3 class="text-lg font-bold text-white group-hover:text-purple-300 transition">Game Progress</h3>
+                        <p class="text-xs text-slate-400">Track XP, domain stats, and analyze performance reports.</p>
+                    </div>
+                    <div class="pt-3 border-t border-slate-800 text-xs font-medium text-purple-400 flex justify-between">
+                        <span id="gatewayXpDisplay">Level 1 (0 XP)</span>
+                        <span>Play →</span>
                     </div>
                 </div>
             </div>
@@ -119,94 +131,30 @@
         <div id="view-todos" class="hidden flex-col flex-1 space-y-6">
             <div class="flex flex-col md:flex-row items-center justify-between gap-4">
                 <button onclick="switchTab('gateway')" class="text-xs text-emerald-400 hover:text-emerald-300 flex items-center space-x-1 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg transition">
-                    <span>← Back to Command Center</span>
+                    <span>← Back</span>
                 </button>
-                
-                <!-- Category Focus Filters & View Switcher -->
                 <div class="flex items-center space-x-2 flex-wrap gap-y-2 justify-center">
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-1 flex items-center space-x-1">
-                        <button onclick="setTodoFilter('All')" id="todoFilterAll" class="todo-filter-btn px-3 py-1 rounded-lg text-xs font-medium transition bg-emerald-600 text-white">All Columns</button>
-                        <button onclick="setTodoFilter('Skills')" id="todoFilterSkills" class="todo-filter-btn px-3 py-1 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white">Skills</button>
-                        <button onclick="setTodoFilter('Abroad')" id="todoFilterAbroad" class="todo-filter-btn px-3 py-1 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white">Abroad</button>
-                        <button onclick="setTodoFilter('Faculty')" id="todoFilterFaculty" class="todo-filter-btn px-3 py-1 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white">Faculty</button>
-                        <button onclick="setTodoFilter('Financial Analytics')" id="todoFilterFinancial Analytics" class="todo-filter-btn px-3 py-1 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white">Financial Analytics</button>
-                        <button onclick="setTodoFilter('General')" id="todoFilterGeneral" class="todo-filter-btn px-3 py-1 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white">General</button>
-                    </div>
-
+                    <div id="todoFilterContainer" class="bg-slate-900 border border-slate-800 rounded-xl p-1 flex items-center space-x-1 flex-wrap"></div>
                     <button onclick="openTodoModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-medium transition shadow">
-                        + Add New Task
+                        + Add Task
                     </button>
                 </div>
             </div>
-
-            <!-- Kanban Boards / Focused Single Column Container -->
-            <div id="todoColumnsContainer" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 flex-1">
-                <div class="todo-col" data-biz="Skills" id="col-Skills">
-                    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col space-y-3 h-full">
-                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                            <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400">Skills</h3>
-                            <span id="countSkills" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">0</span>
-                        </div>
-                        <div id="fullSkillsList" class="space-y-3 overflow-y-auto max-h-[60vh]"></div>
-                    </div>
-                </div>
-                <div class="todo-col" data-biz="Abroad" id="col-Abroad">
-                    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col space-y-3 h-full">
-                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                            <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400">Abroad</h3>
-                            <span id="countAbroad" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">0</span>
-                        </div>
-                        <div id="fullAbroadList" class="space-y-3 overflow-y-auto max-h-[60vh]"></div>
-                    </div>
-                </div>
-                <div class="todo-col" data-biz="Faculty" id="col-Faculty">
-                    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col space-y-3 h-full">
-                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                            <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400">Faculty</h3>
-                            <span id="countFaculty" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">0</span>
-                        </div>
-                        <div id="fullFacultyList" class="space-y-3 overflow-y-auto max-h-[60vh]"></div>
-                    </div>
-                </div>
-                <div class="todo-col" data-biz="Financial Analytics" id="col-Financial Analytics">
-                    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col space-y-3 h-full">
-                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                            <h3 class="text-xs font-bold uppercase tracking-wider text-blue-400">Financial Analytics</h3>
-                            <span id="countFinancial Analytics" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">0</span>
-                        </div>
-                        <div id="fullFinancial AnalyticsList" class="space-y-3 overflow-y-auto max-h-[60vh]"></div>
-                    </div>
-                </div>
-                <div class="todo-col" data-biz="General" id="col-General">
-                    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col space-y-3 h-full">
-                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                            <h3 class="text-xs font-bold uppercase tracking-wider text-purple-400">General</h3>
-                            <span id="countGeneral" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">0</span>
-                        </div>
-                        <div id="fullGeneralList" class="space-y-3 overflow-y-auto max-h-[60vh]"></div>
-                    </div>
-                </div>
-            </div>
+            <div id="todoColumnsContainer" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 flex-1"></div>
         </div>
 
         <!-- Vault View -->
         <div id="view-vault" class="hidden flex-col flex-1 space-y-6">
             <div class="flex items-center justify-between">
                 <button onclick="switchTab('gateway')" class="text-xs text-emerald-400 hover:text-emerald-300 flex items-center space-x-1 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg transition">
-                    <span>← Back to Command Center</span>
+                    <span>← Back</span>
                 </button>
             </div>
             <div class="flex flex-col md:flex-row gap-4 justify-between items-center">
                 <div class="relative w-full md:w-80">
-                    <input type="text" id="searchInput" oninput="filterIdeas()" placeholder="Search thoughts, tags..." class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500 text-slate-200 placeholder-slate-500">
+                    <input type="text" id="searchInput" oninput="filterIdeas()" placeholder="Search thoughts, tags..." class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500 text-slate-200">
                 </div>
-                <div class="flex flex-wrap gap-2 w-full md:w-auto" id="businessFilters">
-                    <button onclick="filterBusiness('All')" class="biz-pill px-3.5 py-1.5 rounded-lg text-xs font-medium transition bg-emerald-600/30 text-emerald-300 border border-emerald-500/50" data-biz="All">All Businesses</button>
-                    <button onclick="filterBusiness('Skills')" class="biz-pill px-3.5 py-1.5 rounded-lg text-xs font-medium transition bg-slate-900 text-slate-400 border border-slate-800 hover:border-slate-700" data-biz="Skills">Skills</button>
-                    <button onclick="filterBusiness('Abroad')" class="biz-pill px-3.5 py-1.5 rounded-lg text-xs font-medium transition bg-slate-900 text-slate-400 border border-slate-800 hover:border-slate-700" data-biz="Abroad">Abroad</button>
-                    <button onclick="filterBusiness('Faculty')" class="biz-pill px-3.5 py-1.5 rounded-lg text-xs font-medium transition bg-slate-900 text-slate-400 border border-slate-800 hover:border-slate-700" data-biz="Faculty">Faculty</button>
-                    <button onclick="filterBusiness('Financial Analytics')" class="biz-pill px-3.5 py-1.5 rounded-lg text-xs font-medium transition bg-slate-900 text-slate-400 border border-slate-800 hover:border-slate-700" data-biz="Financial Analytics">Financial Analytics</button>
-                </div>
+                <div class="flex flex-wrap gap-2 w-full md:w-auto" id="businessFilters"></div>
             </div>
             <div id="ideasGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
         </div>
@@ -217,14 +165,10 @@
                 <button onclick="switchTab('vault')" class="text-xs text-emerald-400 hover:text-emerald-300 flex items-center space-x-1 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg transition">
                     <span>← Back to Vault</span>
                 </button>
-                <button onclick="openEditModal(activeIdeaId)" class="text-xs text-slate-300 hover:text-white flex items-center space-x-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-lg transition">
-                    <span>Edit Idea Details</span>
-                </button>
+                <button onclick="openEditModal(activeIdeaId)" class="text-xs text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-lg transition">Edit Idea</button>
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1">
-                <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex flex-col space-y-2 h-[calc(100vh-220px)] overflow-y-auto" id="briefSidebar">
-                    <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400 px-2 mb-2">Select Idea</h2>
-                </div>
+                <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex flex-col space-y-2 h-[calc(100vh-220px)] overflow-y-auto" id="briefSidebar"></div>
                 <div class="lg:col-span-2 bg-slate-900/80 border border-slate-800 rounded-xl p-6 flex flex-col h-[calc(100vh-220px)] overflow-y-auto" id="briefMainContent"></div>
             </div>
         </div>
@@ -239,38 +183,21 @@
             <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
                 <div>
                     <h2 class="text-lg font-bold text-white">Content Calendar Schedule</h2>
-                    <p class="text-xs text-slate-400">Track planned posts with individual rows per format and business.</p>
                 </div>
                 <div class="flex flex-wrap gap-3 items-center">
-                    <select id="calendarBizFilter" onchange="renderCalendar()" class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
-                        <option value="All">All Businesses</option>
-                        <option value="Skills">Skills</option>
-                        <option value="Abroad">Abroad</option>
-                        <option value="Faculty">Faculty</option>
-                        <option value="Financial Analytics">Financial Analytics</option>
-                    </select>
-
-                    <select id="calendarSort" onchange="renderCalendar()" class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
-                        <option value="default">Sort by: Default</option>
-                        <option value="status">Sort by: Status (Idea → Published)</option>
-                        <option value="date">Sort by: Date & Time</option>
-                    </select>
-
-                    <button onclick="openModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-lg text-xs font-medium transition shadow">
-                        + Schedule Content
-                    </button>
+                    <select id="calendarBizFilter" onchange="renderCalendar()" class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none"></select>
+                    <button onclick="openModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-lg text-xs font-medium transition shadow">+ Schedule</button>
                 </div>
             </div>
-
             <div class="bg-slate-900/80 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
                 <table class="w-full text-left border-collapse text-sm">
                     <thead>
-                        <tr class="border-b border-slate-800 bg-slate-900/90 text-xs text-slate-400 uppercase tracking-wider">
+                        <tr class="border-b border-slate-800 bg-slate-900/90 text-xs text-slate-400 uppercase">
                             <th class="p-4 font-semibold">Content Name</th>
                             <th class="p-4 font-semibold">Business</th>
                             <th class="p-4 font-semibold">Post Type</th>
                             <th class="p-4 font-semibold">Status</th>
-                            <th class="p-4 font-semibold">Scheduled Date & Time</th>
+                            <th class="p-4 font-semibold">Scheduled Date</th>
                             <th class="p-4 font-semibold text-right">Actions</th>
                         </tr>
                     </thead>
@@ -279,7 +206,70 @@
             </div>
         </div>
 
+        <!-- Progress & Anti-Rot Tracker View -->
+        <div id="view-progress" class="hidden flex-col flex-1 space-y-6">
+            <div class="flex items-center justify-between">
+                <button onclick="switchTab('gateway')" class="text-xs text-emerald-400 hover:text-emerald-300 flex items-center space-x-1 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg transition">
+                    <span>← Back</span>
+                </button>
+                <div class="flex items-center space-x-3 bg-purple-950/40 border border-purple-500/30 px-4 py-2 rounded-xl">
+                    <span class="text-2xl">🎮</span>
+                    <div>
+                        <div class="text-xs text-purple-300 font-semibold uppercase tracking-wider" id="playerLevelBadge">Level 1 Prodigy</div>
+                        <div class="text-sm font-bold text-white" id="playerXpText">0 / 100 XP to Next Rank</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- XP Progress Bar -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-3 shadow-xl">
+                <div class="flex justify-between items-center text-xs font-medium">
+                    <span class="text-slate-300 uppercase tracking-wider">Overall Quest Progress</span>
+                    <span id="overallPercentageText" class="text-emerald-400 font-bold">0% Complete</span>
+                </div>
+                <div class="w-full bg-slate-950 rounded-full h-3.5 border border-slate-800 overflow-hidden">
+                    <div id="overallProgressBar" class="bg-gradient-to-r from-emerald-500 to-indigo-500 h-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Domain Performance Breakdown Grid -->
+            <div class="space-y-3">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-300">Individual Domain Performance</h3>
+                <div id="domainStatsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
+
+            <!-- Anti-Rot Analytical Report Section -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-indigo-400">📊 Anti-Rot Analytical Report</h3>
+                    <button onclick="generateReport()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition">Refresh Analysis</button>
+                </div>
+                <div id="analyticalReportContent" class="space-y-3 text-xs text-slate-300 leading-relaxed">
+                    Click refresh analysis to generate your performance diagnostic report.
+                </div>
+            </div>
+        </div>
+
     </main>
+
+    <!-- Modal for Dynamic Category Manager -->
+    <div id="categoryModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
+            <h2 class="text-lg font-bold text-white">Manage Business Categories</h2>
+            <p class="text-xs text-slate-400">Add custom categories instantly without touching code. All tasks and ideas will support them automatically.</p>
+            <div class="flex space-x-2">
+                <input type="text" id="newCategoryInput" placeholder="e.g., Marketing, AI Agents" class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
+                <button onclick="addNewCategory()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-xs font-medium transition">Add</button>
+            </div>
+            <div class="space-y-2 pt-2 border-t border-slate-800">
+                <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Existing Categories</h3>
+                <div id="existingCategoriesList" class="flex flex-wrap gap-2 max-h-40 overflow-y-auto"></div>
+            </div>
+            <div class="flex justify-end pt-3 border-t border-slate-800">
+                <button onclick="closeCategoryManager()" class="px-4 py-2 rounded-lg text-sm bg-slate-800 text-slate-300 hover:text-white transition">Close</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal for New Idea -->
     <div id="ideaModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
@@ -288,54 +278,31 @@
             <form onsubmit="saveIdeaForm(event)" class="space-y-4">
                 <input type="hidden" id="editingId" value="">
                 <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Content Name / Title</label>
-                    <input type="text" id="modalTitle" required placeholder="e.g., How to think like a Data Analyst" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Content Title</label>
+                    <input type="text" id="modalTitle" required placeholder="e.g., How to think like a Data Analyst" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none">
                 </div>
-
                 <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Businesses (Select all that apply)</label>
-                    <div class="grid grid-cols-2 gap-2 mt-1">
-                        <label class="flex items-center space-x-2 text-xs text-slate-300 bg-slate-950 p-2 rounded border border-slate-800 cursor-pointer">
-                            <input type="checkbox" name="modalBiz" value="Skills" class="rounded bg-slate-900 border-slate-700 text-emerald-600">
-                            <span>Skills</span>
-                        </label>
-                        <label class="flex items-center space-x-2 text-xs text-slate-300 bg-slate-950 p-2 rounded border border-slate-800 cursor-pointer">
-                            <input type="checkbox" name="modalBiz" value="Abroad" class="rounded bg-slate-900 border-slate-700 text-emerald-600">
-                            <span>Abroad</span>
-                        </label>
-                        <label class="flex items-center space-x-2 text-xs text-slate-300 bg-slate-950 p-2 rounded border border-slate-800 cursor-pointer">
-                            <input type="checkbox" name="modalBiz" value="Faculty" class="rounded bg-slate-900 border-slate-700 text-emerald-600">
-                            <span>Faculty</span>
-                        </label>
-                        <label class="flex items-center space-x-2 text-xs text-slate-300 bg-slate-950 p-2 rounded border border-slate-800 cursor-pointer">
-                            <input type="checkbox" name="modalBiz" value="Financial Analytics" class="rounded bg-slate-900 border-slate-700 text-emerald-600">
-                            <span>Financial Analytics</span>
-                        </label>
-                    </div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Businesses / Categories</label>
+                    <div id="modalBizCheckboxes" class="grid grid-cols-2 gap-2 mt-1"></div>
                 </div>
-
                 <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Post Types (Select all that apply)</label>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Post Types</label>
                     <div class="grid grid-cols-3 gap-2 mt-1">
                         <label class="flex items-center space-x-2 text-xs text-slate-300 bg-slate-950 p-2 rounded border border-slate-800 cursor-pointer">
-                            <input type="checkbox" name="modalPostType" value="Short Form" class="rounded bg-slate-900 border-slate-700 text-emerald-600">
-                            <span>Short Form</span>
+                            <input type="checkbox" name="modalPostType" value="Short Form" class="rounded bg-slate-900 border-slate-700 text-emerald-600"><span>Short Form</span>
                         </label>
                         <label class="flex items-center space-x-2 text-xs text-slate-300 bg-slate-950 p-2 rounded border border-slate-800 cursor-pointer">
-                            <input type="checkbox" name="modalPostType" value="Long Form" class="rounded bg-slate-900 border-slate-700 text-emerald-600">
-                            <span>Long Form</span>
+                            <input type="checkbox" name="modalPostType" value="Long Form" class="rounded bg-slate-900 border-slate-700 text-emerald-600"><span>Long Form</span>
                         </label>
                         <label class="flex items-center space-x-2 text-xs text-slate-300 bg-slate-950 p-2 rounded border border-slate-800 cursor-pointer">
-                            <input type="checkbox" name="modalPostType" value="Static" class="rounded bg-slate-900 border-slate-700 text-emerald-600">
-                            <span>Static</span>
+                            <input type="checkbox" name="modalPostType" value="Static" class="rounded bg-slate-900 border-slate-700 text-emerald-600"><span>Static</span>
                         </label>
                     </div>
                 </div>
-
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-medium text-slate-400 mb-1">Status</label>
-                        <select id="modalStatus" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
+                        <select id="modalStatus" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none">
                             <option value="Idea">Idea</option>
                             <option value="Scripting">Scripting</option>
                             <option value="Shooting">Shooting</option>
@@ -345,28 +312,20 @@
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-400 mb-1">Scheduled Date & Time</label>
-                        <input type="datetime-local" id="modalScheduleTime" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
+                        <input type="datetime-local" id="modalScheduleTime" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none">
                     </div>
                 </div>
-
                 <div>
                     <label class="block text-xs font-medium text-slate-400 mb-1">Notes & Thoughts</label>
-                    <textarea id="modalNotes" rows="3" placeholder="Jot down your raw thoughts..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 resize-none"></textarea>
+                    <textarea id="modalNotes" rows="3" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none resize-none"></textarea>
                 </div>
-
                 <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">YouTube / Reference URLs (Comma separated)</label>
-                    <textarea id="modalYoutubeUrls" rows="2" placeholder="https://youtube.com/watch?v=..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 resize-none"></textarea>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">YouTube / Reference URLs</label>
+                    <textarea id="modalYoutubeUrls" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none resize-none"></textarea>
                 </div>
-
-                <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Tags (comma separated)</label>
-                    <input type="text" id="modalTags" placeholder="Data, Mindset, Reel" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
-                </div>
-
                 <div class="flex justify-end space-x-3 pt-4 border-t border-slate-800">
                     <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-lg text-sm text-slate-400 hover:text-white transition">Cancel</button>
-                    <button type="submit" id="modalSubmitBtn" class="px-4 py-2 rounded-lg text-sm bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition shadow-lg shadow-emerald-600/20">Save & Schedule</button>
+                    <button type="submit" id="modalSubmitBtn" class="px-4 py-2 rounded-lg text-sm bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition">Save & Schedule</button>
                 </div>
             </form>
         </div>
@@ -380,39 +339,33 @@
                 <input type="hidden" id="editingTodoId" value="">
                 <div>
                     <label class="block text-xs font-medium text-slate-400 mb-1">Task Title</label>
-                    <input type="text" id="todoModalTitle" required placeholder="e.g., Review analytics dataset" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
+                    <input type="text" id="todoModalTitle" required placeholder="e.g., Review analytics dataset" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-400 mb-1">Business / Category</label>
-                    <select id="todoModalBusiness" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
-                        <option value="Skills">Skills</option>
-                        <option value="Abroad">Abroad</option>
-                        <option value="Faculty">Faculty</option>
-                        <option value="Financial Analytics">Financial Analytics</option>
-                        <option value="General">General</option>
-                    </select>
+                    <select id="todoModalBusiness" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none"></select>
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Description (1-2 lines)</label>
-                    <textarea id="todoModalDesc" rows="2" placeholder="Briefly explain what needs to be done..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 resize-none"></textarea>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Description</label>
+                    <textarea id="todoModalDesc" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none resize-none"></textarea>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-medium text-slate-400 mb-1">Priority</label>
-                        <select id="todoModalPriority" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
+                        <select id="todoModalPriority" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none">
                             <option value="Medium">Medium</option>
                             <option value="High">High</option>
                             <option value="Low">Low</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-400 mb-1">Deadline Date & Time</label>
-                        <input type="datetime-local" id="todoModalDeadline" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Deadline</label>
+                        <input type="datetime-local" id="todoModalDeadline" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none">
                     </div>
                 </div>
                 <div class="flex justify-end space-x-3 pt-4 border-t border-slate-800">
                     <button type="button" onclick="closeTodoModal()" class="px-4 py-2 rounded-lg text-sm text-slate-400 hover:text-white transition">Cancel</button>
-                    <button type="submit" id="todoModalSubmitBtn" class="px-4 py-2 rounded-lg text-sm bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition shadow">Save Task</button>
+                    <button type="submit" id="todoModalSubmitBtn" class="px-4 py-2 rounded-lg text-sm bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition">Save Task</button>
                 </div>
             </form>
         </div>
@@ -422,6 +375,7 @@
     <script>
         let ideas = [];
         let todos = [];
+        let categories = ['Skills', 'Abroad', 'Faculty', 'Financial Analytics', 'General'];
         let activeBusiness = 'All';
         let activeTodoFilter = 'All';
         let activeIdeaId = null;
@@ -432,21 +386,29 @@
         window.initFirebaseSync = function() {
             window.onSnapshot(window.colIdeas, (snapshot) => {
                 ideas = [];
-                snapshot.forEach((docSnap) => {
-                    ideas.push({ id: docSnap.id, ...docSnap.data() });
-                });
+                snapshot.forEach((docSnap) => { ideas.push({ id: docSnap.id, ...docSnap.data() }); });
                 if (ideas.length > 0 && !activeIdeaId) activeIdeaId = ideas[0].id;
                 refreshActiveView();
             });
 
             window.onSnapshot(window.colTodos, (snapshot) => {
                 todos = [];
-                snapshot.forEach((docSnap) => {
-                    todos.push({ id: docSnap.id, ...docSnap.data() });
-                });
+                snapshot.forEach((docSnap) => { todos.push({ id: docSnap.id, ...docSnap.data() }); });
+                refreshActiveView();
+            });
+
+            window.onSnapshot(window.doc(window.db, "metadata", "config"), (docSnap) => {
+                if (docSnap.exists() && docSnap.data().categories) {
+                    categories = docSnap.data().categories;
+                }
+                updateCategoryDropdowns();
                 refreshActiveView();
             });
         };
+
+        async function saveCategoriesToCloud() {
+            await window.setDoc(window.doc(window.db, "metadata", "config"), { categories });
+        }
 
         function refreshActiveView() {
             if (currentTab === 'gateway') renderGateway();
@@ -454,26 +416,16 @@
             else if (currentTab === 'vault') renderVault();
             else if (currentTab === 'generator') renderGenerator();
             else if (currentTab === 'calendar') renderCalendar();
+            else if (currentTab === 'progress') renderProgressTracker();
         }
 
-        async function saveIdeaToCloud(idea) {
-            await window.setDoc(window.doc(window.db, "ideas", idea.id), idea);
-        }
-
-        async function deleteIdeaFromCloud(id) {
-            await window.deleteDoc(window.doc(window.db, "ideas", id));
-        }
-
-        async function saveTodoToCloud(todo) {
-            await window.setDoc(window.doc(window.db, "todos", todo.id), todo);
-        }
-
-        async function deleteTodoFromCloud(id) {
-            await window.deleteDoc(window.doc(window.db, "todos", id));
-        }
+        async function saveIdeaToCloud(idea) { await window.setDoc(window.doc(window.db, "ideas", idea.id), idea); }
+        async function deleteIdeaFromCloud(id) { await window.deleteDoc(window.doc(window.db, "ideas", id)); }
+        async function saveTodoToCloud(todo) { await window.setDoc(window.doc(window.db, "todos", todo.id), todo); }
+        async function deleteTodoFromCloud(id) { await window.deleteDoc(window.doc(window.db, "todos", id)); }
 
         function exportData() {
-            const dataObj = { ideas, todos };
+            const dataObj = { ideas, todos, categories };
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataObj, null, 2));
             const downloadAnchor = document.createElement('a');
             downloadAnchor.setAttribute("href", dataStr);
@@ -491,15 +443,12 @@
                     try {
                         const imported = JSON.parse(e.target.result);
                         if (imported && typeof imported === 'object') {
-                            if (imported.ideas) {
-                                for (let item of imported.ideas) { await saveIdeaToCloud(item); }
-                            }
-                            if (imported.todos) {
-                                for (let item of imported.todos) { await saveTodoToCloud(item); }
-                            }
+                            if (imported.categories) { categories = imported.categories; await saveCategoriesToCloud(); }
+                            if (imported.ideas) { for (let item of imported.ideas) { await saveIdeaToCloud(item); } }
+                            if (imported.todos) { for (let item of imported.todos) { await saveTodoToCloud(item); } }
                         }
                         switchTab('gateway');
-                        alert("Data successfully imported and synced to Firebase!");
+                        alert("Data and categories successfully imported and synced!");
                     } catch (err) { alert("Error reading backup file."); }
                 };
             }
@@ -507,13 +456,11 @@
 
         function switchTab(tab) {
             currentTab = tab;
-            const views = ['gateway', 'todos', 'vault', 'generator', 'calendar'];
-            views.forEach(v => {
+            ['gateway', 'todos', 'vault', 'generator', 'calendar', 'progress'].forEach(v => {
                 const el = document.getElementById('view-' + v);
                 if (el) el.style.display = (v === tab) ? 'flex' : 'none';
             });
-
-            ['gateway', 'todos', 'vault', 'generator', 'calendar'].forEach(v => {
+            ['gateway', 'todos', 'vault', 'calendar', 'progress'].forEach(v => {
                 const btn = document.getElementById('btn-' + v);
                 if (btn) {
                     btn.className = (v === tab) 
@@ -521,16 +468,95 @@
                         : "px-3 py-1.5 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white hover:bg-slate-800";
                 }
             });
-
             refreshActiveView();
+        }
+
+        function updateCategoryDropdowns() {
+            // Todo Business Select
+            const todoBizSel = document.getElementById('todoModalBusiness');
+            if (todoBizSel) {
+                todoBizSel.innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+            }
+            // Calendar Biz Filter
+            const calFilter = document.getElementById('calendarBizFilter');
+            if (calFilter) {
+                calFilter.innerHTML = `<option value="All">All Businesses</option>` + categories.map(c => `<option value="${c}">${c}</option>`).join('');
+            }
+            // Idea Vault Filters Bar
+            const vaultFilters = document.getElementById('businessFilters');
+            if (vaultFilters) {
+                vaultFilters.innerHTML = `<button onclick="filterBusiness('All')" class="biz-pill px-3.5 py-1.5 rounded-lg text-xs font-medium transition bg-emerald-600/30 text-emerald-300 border border-emerald-500/50" data-biz="All">All Businesses</button>` +
+                    categories.map(c => `<button onclick="filterBusiness('${c}')" class="biz-pill px-3.5 py-1.5 rounded-lg text-xs font-medium transition bg-slate-900 text-slate-400 border border-slate-800 hover:border-slate-700" data-biz="${c}">${c}</button>`).join('');
+            }
+            // Todo Focus Filter Bar
+            const todoFilterContainer = document.getElementById('todoFilterContainer');
+            if (todoFilterContainer) {
+                todoFilterContainer.innerHTML = `<button onclick="setTodoFilter('All')" id="todoFilterAll" class="todo-filter-btn px-3 py-1 rounded-lg text-xs font-medium transition bg-emerald-600 text-white">All Columns</button>` +
+                    categories.map(c => `<button onclick="setTodoFilter('${c}')" id="todoFilter${c.replace(/[^a-zA-Z0-9]/g, '')}" class="todo-filter-btn px-3 py-1 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white">${c}</button>`).join('');
+            }
+            // Idea Modal Checkboxes
+            const modalBizCheckboxes = document.getElementById('modalBizCheckboxes');
+            if (modalBizCheckboxes) {
+                modalBizCheckboxes.innerHTML = categories.map(c => `
+                    <label class="flex items-center space-x-2 text-xs text-slate-300 bg-slate-950 p-2 rounded border border-slate-800 cursor-pointer">
+                        <input type="checkbox" name="modalBiz" value="${c}" class="rounded bg-slate-900 border-slate-700 text-emerald-600">
+                        <span>${c}</span>
+                    </label>
+                `).join('');
+            }
+        }
+
+        function openCategoryManager() {
+            renderExistingCategoriesList();
+            document.getElementById('categoryModal').classList.remove('hidden');
+        }
+        function closeCategoryManager() { document.getElementById('categoryModal').classList.add('hidden'); }
+
+        async function addNewCategory() {
+            const input = document.getElementById('newCategoryInput');
+            const val = input.value.trim();
+            if (val && !categories.includes(val)) {
+                categories.push(val);
+                input.value = '';
+                await saveCategoriesToCloud();
+                updateCategoryDropdowns();
+                renderExistingCategoriesList();
+                refreshActiveView();
+            }
+        }
+
+        async function deleteCategory(cat) {
+            if (categories.length <= 1) { alert("You must keep at least one category."); return; }
+            categories = categories.filter(c => c !== cat);
+            await saveCategoriesToCloud();
+            updateCategoryDropdowns();
+            renderExistingCategoriesList();
+            refreshActiveView();
+        }
+
+        function renderExistingCategoriesList() {
+            const list = document.getElementById('existingCategoriesList');
+            if (!list) return;
+            list.innerHTML = categories.map(c => `
+                <div class="flex items-center justify-between bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-lg text-xs text-slate-200">
+                    <span>${c}</span>
+                    <button onclick="deleteCategory('${c}')" class="text-rose-400 hover:text-rose-300 ml-3">×</button>
+                </div>
+            `).join('');
         }
 
         function renderGateway() {
             const pending = todos.filter(t => !t.completed).length;
             const pendingEl = document.getElementById('gatewayPendingCount');
             const ideaEl = document.getElementById('gatewayIdeaCount');
-            if (pendingEl) pendingEl.innerText = `${pending} pending task${pending === 1 ? '' : 's'}`;
-            if (ideaEl) ideaEl.innerText = `${ideas.length} idea${ideas.length === 1 ? '' : 's'} saved`;
+            const xpEl = document.getElementById('gatewayXpDisplay');
+            if (pendingEl) pendingEl.innerText = `${pending} pending`;
+            if (ideaEl) ideaEl.innerText = `${ideas.length} ideas`;
+            if (xpEl) {
+                const completedCount = todos.filter(t => t.completed).length;
+                const xp = completedCount * 25;
+                xpEl.innerText = `${xp} XP Earned`;
+            }
         }
 
         function getCountdown(deadlineStr) {
@@ -543,14 +569,13 @@
             return `<span class="text-amber-400">${hours}h left</span>`;
         }
 
-        function getSortedTodos(list) {
-            return [...list].sort((a, b) => (a.completed === b.completed ? 0 : a.completed ? 1 : -1));
-        }
+        function getSortedTodos(list) { return [...list].sort((a, b) => (a.completed === b.completed ? 0 : a.completed ? 1 : -1)); }
 
         function setTodoFilter(filter) {
             activeTodoFilter = filter;
-            ['All', 'Skills', 'Abroad', 'Faculty', 'Financial Analytics', 'General'].forEach(f => {
-                const btn = document.getElementById('todoFilter' + f.replace(' ', ''));
+            ['All', ...categories].forEach(f => {
+                const cleanId = 'todoFilter' + f.replace(/[^a-zA-Z0-9]/g, '');
+                const btn = document.getElementById(cleanId);
                 if (btn) {
                     btn.className = (f === filter)
                         ? "todo-filter-btn px-3 py-1 rounded-lg text-xs font-medium transition bg-emerald-600 text-white"
@@ -561,38 +586,48 @@
             const cols = document.querySelectorAll('.todo-col');
             cols.forEach(col => {
                 const biz = col.getAttribute('data-biz');
-                if (filter === 'All' || biz === filter) {
-                    col.style.display = 'block';
-                } else {
-                    col.style.display = 'none';
-                }
+                if (filter === 'All' || biz === filter) { col.style.display = 'block'; }
+                else { col.style.display = 'none'; }
             });
 
             const container = document.getElementById('todoColumnsContainer');
             if (filter === 'All') {
-                container.className = "grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 flex-1";
+                container.className = `grid grid-cols-1 md:grid-cols-3 lg:grid-cols-${Math.min(categories.length, 4)} gap-4 flex-1`;
             } else {
                 container.className = "grid grid-cols-1 max-w-xl mx-auto w-full flex-1";
             }
-
             renderTodos();
         }
 
         function renderTodos() {
-            ['Skills', 'Abroad', 'Faculty', 'Financial Analytics', 'General'].forEach(biz => {
-                const container = document.getElementById('full' + biz + 'List');
-                const countBadge = document.getElementById('count' + biz);
-                if (!container || !countBadge) return;
-                
+            const containerGrid = document.getElementById('todoColumnsContainer');
+            if (!containerGrid) return;
+
+            containerGrid.innerHTML = categories.map(biz => `
+                <div class="todo-col bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col space-y-3 h-full" data-biz="${biz}" id="col-${biz}" style="${activeTodoFilter !== 'All' && activeTodoFilter !== biz ? 'display:none;' : ''}">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400">${biz}</h3>
+                        <span id="count${biz.replace(/[^a-zA-Z0-9]/g, '')}" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">0</span>
+                    </div>
+                    <div id="full${biz.replace(/[^a-zA-Z0-9]/g, '')}List" class="space-y-3 overflow-y-auto max-h-[60vh]"></div>
+                </div>
+            `).join('');
+
+            categories.forEach(biz => {
+                const cleanKey = biz.replace(/[^a-zA-Z0-9]/g, '');
+                const listEl = document.getElementById('full' + cleanKey + 'List');
+                const countEl = document.getElementById('count' + cleanKey);
+                if (!listEl || !countEl) return;
+
                 const bizTodos = getSortedTodos(todos.filter(t => t.business === biz));
-                countBadge.innerText = bizTodos.length;
+                countEl.innerText = bizTodos.length;
 
                 if (bizTodos.length === 0) {
-                    container.innerHTML = `<p class="text-xs text-slate-500 italic py-4 text-center">No tasks</p>`;
+                    listEl.innerHTML = `<p class="text-xs text-slate-500 italic py-4 text-center">No tasks</p>`;
                     return;
                 }
 
-                container.innerHTML = bizTodos.map(t => `
+                listEl.innerHTML = bizTodos.map(t => `
                     <div class="bg-slate-950 border border-slate-800/80 p-3.5 rounded-xl space-y-2">
                         <div class="flex items-start justify-between gap-2">
                             <div class="flex items-start space-x-2.5">
@@ -623,7 +658,7 @@
             document.getElementById('todoModalTitle').value = '';
             document.getElementById('todoModalDesc').value = '';
             document.getElementById('todoModalDeadline').value = '';
-            document.getElementById('todoModalBusiness').value = activeTodoFilter !== 'All' ? activeTodoFilter : 'Skills';
+            document.getElementById('todoModalBusiness').value = activeTodoFilter !== 'All' ? activeTodoFilter : categories[0];
             document.getElementById('todoModalPriority').value = 'Medium';
             document.getElementById('todoModal').classList.remove('hidden');
         }
@@ -635,16 +670,14 @@
             document.getElementById('todoModalHeaderTitle').innerText = 'Edit Task';
             document.getElementById('todoModalSubmitBtn').innerText = 'Update Task';
             document.getElementById('todoModalTitle').value = task.title || '';
-            document.getElementById('todoModalBusiness').value = task.business || 'Skills';
+            document.getElementById('todoModalBusiness').value = task.business || categories[0];
             document.getElementById('todoModalDesc').value = task.desc || '';
             document.getElementById('todoModalPriority').value = task.priority || 'Medium';
             document.getElementById('todoModalDeadline').value = task.deadline || '';
             document.getElementById('todoModal').classList.remove('hidden');
         }
 
-        function closeTodoModal() {
-            document.getElementById('todoModal').classList.add('hidden');
-        }
+        function closeTodoModal() { document.getElementById('todoModal').classList.add('hidden'); }
 
         async function saveTodoForm(e) {
             e.preventDefault();
@@ -658,41 +691,20 @@
             let todoToSave;
             if (editingId) {
                 const existing = todos.find(t => t.id === editingId);
-                if (existing) {
-                    existing.title = title;
-                    existing.business = business;
-                    existing.desc = desc;
-                    existing.priority = priority;
-                    existing.deadline = deadline;
-                    todoToSave = existing;
-                }
+                if (existing) { existing.title = title; existing.business = business; existing.desc = desc; existing.priority = priority; existing.deadline = deadline; todoToSave = existing; }
             } else {
-                todoToSave = {
-                    id: Date.now().toString(),
-                    title,
-                    business,
-                    desc,
-                    completed: false,
-                    priority,
-                    deadline
-                };
+                todoToSave = { id: Date.now().toString(), title, business, desc, completed: false, priority, deadline };
             }
-
             await saveTodoToCloud(todoToSave);
             closeTodoModal();
         }
 
         async function toggleTodo(id) {
             const item = todos.find(t => t.id === id);
-            if (item) {
-                item.completed = !item.completed;
-                await saveTodoToCloud(item);
-            }
+            if (item) { item.completed = !item.completed; await saveTodoToCloud(item); }
         }
 
-        async function deleteTodo(id) {
-            await deleteTodoFromCloud(id);
-        }
+        async function deleteTodo(id) { await deleteTodoFromCloud(id); }
 
         function filterBusiness(biz) {
             activeBusiness = biz;
@@ -713,30 +725,28 @@
             if (!grid) return;
             
             const filtered = ideas.filter(idea => {
-                const matchesSearch = idea.title.toLowerCase().includes(query) || 
-                                      idea.notes.toLowerCase().includes(query) ||
-                                      (idea.tags || []).some(t => t.toLowerCase().includes(query));
+                const matchesSearch = idea.title.toLowerCase().includes(query) || idea.notes.toLowerCase().includes(query);
                 const matchesBiz = activeBusiness === 'All' || (idea.businesses && idea.businesses.includes(activeBusiness));
                 return matchesSearch && matchesBiz;
             });
 
             if (filtered.length === 0) {
-                grid.innerHTML = `<div class="col-span-full text-center py-20 bg-slate-900/30 border border-slate-800/80 rounded-2xl"><h3 class="text-base font-medium text-slate-300">No ideas found</h3></div>`;
+                grid.innerHTML = `<div class="col-span-full text-center py-20 bg-slate-900/30 border border-slate-800 rounded-2xl"><h3 class="text-base font-medium text-slate-300">No ideas found</h3></div>`;
                 return;
             }
 
             grid.innerHTML = filtered.map(idea => `
-                <div onclick="selectAndOpenGenerator('${idea.id}')" class="group bg-slate-900/80 border border-slate-800/90 rounded-xl p-5 hover:border-emerald-500/50 transition cursor-pointer flex flex-col justify-between shadow-sm">
+                <div onclick="selectAndOpenGenerator('${idea.id}')" class="group bg-slate-900/80 border border-slate-800 rounded-xl p-5 hover:border-emerald-500/50 transition cursor-pointer flex flex-col justify-between shadow-sm">
                     <div>
                         <div class="flex items-center justify-between mb-3">
                             <span class="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">${idea.status}</span>
                             <div class="flex items-center space-x-1">
-                                <button onclick="openEditModalFromGrid(event, '${idea.id}')" class="text-slate-400 hover:text-emerald-300 transition p-1" title="Edit">✏️</button>
-                                <button onclick="deleteIdea(event, '${idea.id}')" class="text-slate-600 hover:text-rose-400 transition p-1" title="Delete">🗑️</button>
+                                <button onclick="openEditModalFromGrid(event, '${idea.id}')" class="text-slate-400 hover:text-emerald-300 transition p-1">✏️</button>
+                                <button onclick="deleteIdea(event, '${idea.id}')" class="text-slate-600 hover:text-rose-400 transition p-1">🗑️</button>
                             </div>
                         </div>
                         <h3 class="text-base font-semibold text-white group-hover:text-emerald-300 transition line-clamp-2 mb-2">${idea.title}</h3>
-                        <p class="text-xs text-slate-400 line-clamp-3 mb-4 leading-relaxed">${idea.notes || 'No notes added yet...'}</p>
+                        <p class="text-xs text-slate-400 line-clamp-3 mb-4 leading-relaxed">${idea.notes || 'No notes added...'}</p>
                     </div>
                     <div>
                         <div class="flex flex-wrap gap-1 mb-2">
@@ -748,24 +758,19 @@
             `).join('');
         }
 
-        function selectAndOpenGenerator(id) {
-            activeIdeaId = id;
-            switchTab('generator');
-        }
+        function selectAndOpenGenerator(id) { activeIdeaId = id; switchTab('generator'); }
 
         function renderGenerator() {
             const sidebar = document.getElementById('briefSidebar');
             const main = document.getElementById('briefMainContent');
             if (!sidebar || !main) return;
 
-            if (ideas.length > 0 && !ideas.some(i => i.id === activeIdeaId)) {
-                activeIdeaId = ideas[0].id;
-            }
+            if (ideas.length > 0 && !ideas.some(i => i.id === activeIdeaId)) { activeIdeaId = ideas[0].id; }
 
             sidebar.innerHTML = `
                 <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400 px-2 mb-2">Select Idea</h2>
                 ${ideas.map(i => `
-                    <button onclick="setActiveIdea('${i.id}')" class="w-full text-left px-3.5 py-3 rounded-lg text-sm transition flex flex-col space-y-1 ${activeIdeaId === i.id ? 'bg-emerald-600/20 border border-emerald-500/40 text-white' : 'hover:bg-slate-800/60 text-slate-300 border border-transparent'}">
+                    <button onclick="setActiveIdea('${i.id}')" class="w-full text-left px-3.5 py-3 rounded-lg text-sm transition flex flex-col space-y-1 ${activeIdeaId === i.id ? 'bg-emerald-600/20 border border-emerald-500/40 text-white' : 'hover:bg-slate-800 text-slate-300 border border-transparent'}">
                         <span class="font-medium truncate">${i.title}</span>
                         <span class="text-[10px] text-slate-400">${(i.businesses || []).join(', ')}</span>
                     </button>
@@ -773,51 +778,7 @@
             `;
 
             const current = ideas.find(i => i.id === activeIdeaId);
-            if (!current) {
-                main.innerHTML = `<div class="flex-1 flex items-center justify-center text-slate-500">No ideas available.</div>`;
-                return;
-            }
-
-            let ytLinksHtml = '';
-            if (current.youtubeUrls && current.youtubeUrls.length > 0) {
-                ytLinksHtml = `
-                    <div class="mb-6">
-                        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Reference YouTube Links</h3>
-                        <div class="flex flex-col space-y-2">
-                            ${current.youtubeUrls.map((url, idx) => `
-                                <a href="${url}" target="_blank" class="flex items-center justify-between bg-slate-950/60 border border-slate-800 hover:border-emerald-500/40 p-3 rounded-lg text-sm text-emerald-300 transition group">
-                                    <span class="truncate">🔗 Reference Video ${idx + 1}: ${url}</span>
-                                    <span class="text-xs text-slate-400 group-hover:text-emerald-300 ml-2">Open ↗</span>
-                                </a>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            }
-
-            let scriptsHtml = `
-                <div class="mb-6 space-y-4">
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400">Script Vault (Saved Versions)</h3>
-                        <button onclick="addNewScriptVersion()" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition">+ Add Script Version</button>
-                    </div>
-                    ${(current.scripts || []).length === 0 ? '<p class="text-xs text-slate-500 italic">No script versions saved yet.</p>' : ''}
-                    <div class="space-y-4">
-                        ${(current.scripts || []).map((script, idx) => `
-                            <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3">
-                                <div class="flex items-center justify-between gap-3">
-                                    <input type="text" value="${script.name || 'Version ' + (idx + 1)}" onchange="updateScriptName('${script.id}', this.value)" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1 text-xs font-semibold text-white focus:outline-none w-52">
-                                    <div class="flex items-center space-x-2">
-                                        <button onclick="navigator.clipboard.writeText('${script.content.replace(/'/g, "\\'")}')" class="text-xs text-slate-400 hover:text-emerald-300 bg-slate-900 px-2.5 py-1 rounded border border-slate-800">Copy</button>
-                                        <button onclick="deleteScriptVersion('${script.id}')" class="text-xs text-rose-400 hover:text-rose-300 bg-slate-900 px-2.5 py-1 rounded border border-slate-800">Delete</button>
-                                    </div>
-                                </div>
-                                <textarea rows="4" onchange="updateScriptContent('${script.id}', this.value)" placeholder="Write your script here..." class="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-sm text-slate-200 focus:outline-none resize-y">${script.content || ''}</textarea>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
+            if (!current) { main.innerHTML = `<div class="flex-1 flex items-center justify-center text-slate-500">No ideas available.</div>`; return; }
 
             main.innerHTML = `
                 <div class="space-y-6">
@@ -837,57 +798,23 @@
                             <option value="Published" ${current.status === 'Published' ? 'selected' : ''}>Published</option>
                         </select>
                     </div>
-
-                    ${ytLinksHtml}
                     <div>
                         <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Raw Notes & Thoughts</h3>
-                        <div class="bg-slate-950/60 border border-slate-800/80 rounded-lg p-4 text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">${current.notes || 'No raw notes provided.'}</div>
-                    </div>
-                    ${scriptsHtml}
-                    <div class="bg-gradient-to-br from-emerald-950/30 to-blue-950/30 border border-emerald-500/30 rounded-xl p-5 flex flex-col space-y-3">
-                        <div class="flex items-center justify-between">
-                            <h3 class="text-sm font-semibold text-white">AI Script Generation Helper</h3>
-                            <button onclick="copyGeminiPrompt()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition shadow">Copy Prompt for Gemini</button>
-                        </div>
-                        <p class="text-xs text-slate-400">Copies your title, businesses, post types, and notes into an optimized prompt to paste straight into Gemini for instant script writing.</p>
+                        <div class="bg-slate-950 border border-slate-800 rounded-lg p-4 text-sm text-slate-300 whitespace-pre-wrap">${current.notes || 'No notes.'}</div>
                     </div>
                 </div>
             `;
         }
 
-        async function addNewScriptVersion() {
+        function setActiveIdea(id) { activeIdeaId = id; switchTab('generator'); }
+        async function updateStatus(newStatus) {
             const current = ideas.find(i => i.id === activeIdeaId);
-            if (!current) return;
-            if (!current.scripts) current.scripts = [];
-            current.scripts.push({ id: Date.now().toString(), name: `Version ${current.scripts.length + 1}`, content: '' });
-            await saveIdeaToCloud(current);
-        }
-
-        async function updateScriptName(scriptId, newName) {
-            const current = ideas.find(i => i.id === activeIdeaId);
-            if (!current || !current.scripts) return;
-            const script = current.scripts.find(s => s.id === scriptId);
-            if (script) { script.name = newName; await saveIdeaToCloud(current); }
-        }
-
-        async function updateScriptContent(scriptId, newContent) {
-            const current = ideas.find(i => i.id === activeIdeaId);
-            if (!current || !current.scripts) return;
-            const script = current.scripts.find(s => s.id === scriptId);
-            if (script) { script.content = newContent; await saveIdeaToCloud(current); }
-        }
-
-        async function deleteScriptVersion(scriptId) {
-            const current = ideas.find(i => i.id === activeIdeaId);
-            if (!current || !current.scripts) return;
-            current.scripts = current.scripts.filter(s => s.id !== scriptId);
-            await saveIdeaToCloud(current);
+            if (current) { current.status = newStatus; await saveIdeaToCloud(current); }
         }
 
         function renderCalendar() {
             const tbody = document.getElementById('calendarTableBody');
             const bizFilter = document.getElementById('calendarBizFilter').value;
-            const sortMode = document.getElementById('calendarSort').value;
             if (!tbody) return;
 
             let rows = [];
@@ -902,43 +829,102 @@
             });
 
             if (bizFilter !== 'All') rows = rows.filter(r => r.business === bizFilter);
-            if (sortMode === 'status') rows.sort((a, b) => (statusRank[a.status] || 0) - (statusRank[b.status] || 0));
-            else if (sortMode === 'date') rows.sort((a, b) => new Date(a.scheduleTime || '9999-12-31') - new Date(b.scheduleTime || '9999-12-31'));
 
-            if (rows.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-500">No scheduled content found.</td></tr>`;
-                return;
-            }
+            if (rows.length === 0) { tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-500">No scheduled content.</td></tr>`; return; }
 
             tbody.innerHTML = rows.map(r => `
                 <tr class="hover:bg-slate-900/50 transition">
                     <td class="p-4 font-medium text-white">${r.title}</td>
                     <td class="p-4"><span class="text-[10px] bg-emerald-950/60 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded">${r.business}</span></td>
-                    <td class="p-4"><span class="text-xs bg-slate-800 px-2.5 py-1 rounded-md text-slate-300">${r.postType}</span></td>
-                    <td class="p-4"><span class="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20">${r.status}</span></td>
+                    <td class="p-4"><span class="text-xs bg-slate-800 px-2.5 py-1 rounded text-slate-300">${r.postType}</span></td>
+                    <td class="p-4"><span class="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-500/20">${r.status}</span></td>
                     <td class="p-4 text-xs text-slate-400">${r.scheduleTime ? r.scheduleTime.replace('T', ' ') : 'Not scheduled'}</td>
                     <td class="p-4 text-right">
-                        <button onclick="openEditModalFromCalendar('${r.id}')" class="text-emerald-400 hover:text-emerald-300 text-xs font-medium mr-3">Edit</button>
                         <button onclick="deleteIdea(event, '${r.id}')" class="text-rose-400 hover:text-rose-300 text-xs font-medium">Delete</button>
                     </td>
                 </tr>
             `).join('');
         }
 
-        function setActiveIdea(id) { activeIdeaId = id; switchTab('generator'); }
-        async function updateStatus(newStatus) {
-            const current = ideas.find(i => i.id === activeIdeaId);
-            if (current) { current.status = newStatus; await saveIdeaToCloud(current); }
+        // Game Progress & Anti-Rot Tracker Logic
+        function renderProgressTracker() {
+            const totalTasks = todos.length;
+            const completedTasks = todos.filter(t => t.completed).length;
+            const pct = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+            const xp = completedTasks * 25;
+            const level = Math.floor(xp / 100) + 1;
+
+            document.getElementById('playerLevelBadge').innerText = `Level ${level} ${level > 2 ? 'Master Builder' : 'Prodigy'}`;
+            document.getElementById('playerXpText').innerText = `${xp} Total XP Earned (${completedTasks} Tasks Completed)`;
+            document.getElementById('overallPercentageText').innerText = `${pct}% Complete (${completedTasks}/${totalTasks} Tasks)`;
+            document.getElementById('overallProgressBar').style.width = `${pct}%`;
+
+            // Domain Stats Grid
+            const domainGrid = document.getElementById('domainStatsGrid');
+            domainGrid.innerHTML = categories.map(cat => {
+                const catTodos = todos.filter(t => t.business === cat);
+                const catTotal = catTodos.length;
+                const catDone = catTodos.filter(t => t.completed).length;
+                const catPct = catTotal > 0 ? Math.round((catDone / catTotal) * 100) : 0;
+                
+                return `
+                    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col space-y-3">
+                        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                            <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider">${cat}</h4>
+                            <span class="text-[10px] text-slate-400">${catDone}/${catTotal} Done</span>
+                        </div>
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-[11px] text-slate-300">
+                                <span>Efficiency</span>
+                                <span class="font-bold">${catPct}%</span>
+                            </div>
+                            <div class="w-full bg-slate-950 rounded-full h-2 border border-slate-800 overflow-hidden">
+                                <div class="bg-emerald-500 h-full transition-all duration-300" style="width: ${catPct}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            generateReport();
         }
 
-        function copyGeminiPrompt() {
-            const current = ideas.find(i => i.id === activeIdeaId);
-            if (!current) return;
-            const prompt = `Act as an expert content creator and scriptwriter for Analyticall Chefs. Please write a highly engaging script for (${(current.postTypes || ['Short Form']).join(', ')}):\n\nTitle: ${current.title}\nTarget Businesses: ${(current.businesses || []).join(', ')}\nRaw Notes: ${current.notes || 'None'}\n\nGuidelines: If Short Form, keep strictly under 110 words for a 45-second duration with a 3-second hook.`;
-            navigator.clipboard.writeText(prompt).then(() => alert("Copied Gemini prompt to clipboard!"));
-        }
+        function generateReport() {
+            const reportContainer = document.getElementById('analyticalReportContent');
+            if (todos.length === 0 && ideas.length === 0) {
+                reportContainer.innerHTML = `<p class="italic text-slate-500">No data available yet. Add tasks and ideas to generate actionable insights.</p>`;
+                return;
+            }
 
-        function filterIdeas() { renderVault(); }
+            const completed = todos.filter(t => t.completed).length;
+            const pending = todos.filter(t => !t.completed).length;
+            
+            // Find best performing domain
+            let bestCat = categories[0];
+            let maxDone = -1;
+            categories.forEach(cat => {
+                const done = todos.filter(t => t.business === cat && t.completed).length;
+                if (done > maxDone) { maxDone = done; bestCat = cat; }
+            });
+
+            reportContainer.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                        <div class="text-slate-400 text-[10px] uppercase">Completed Quests</div>
+                        <div class="text-lg font-bold text-emerald-400">${completed}</div>
+                    </div>
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                        <div class="text-slate-400 text-[10px] uppercase">Pending Backlog</div>
+                        <div class="text-lg font-bold text-amber-400">${pending}</div>
+                    </div>
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                        <div class="text-slate-400 text-[10px] uppercase">Top Domain</div>
+                        <div class="text-lg font-bold text-indigo-400">${bestCat}</div>
+                    </div>
+                </div>
+                <p class="text-slate-300">💡 <strong>Anti-Rot Diagnostic:</strong> You are performing strongest in <strong>${bestCat}</strong>. Keep your focus locked here to avoid mindless scrolling loops. Tackle your high-priority pending items during your peak energy hours to maximize your XP gain!</p>
+            `;
+        }
 
         function openModal() {
             document.getElementById('editingId').value = '';
@@ -947,7 +933,6 @@
             document.getElementById('modalTitle').value = '';
             document.getElementById('modalNotes').value = '';
             document.getElementById('modalYoutubeUrls').value = '';
-            document.getElementById('modalTags').value = '';
             document.getElementById('modalScheduleTime').value = '';
             document.querySelectorAll('input[name="modalBiz"]').forEach(cb => cb.checked = false);
             document.querySelectorAll('input[name="modalPostType"]').forEach(cb => cb.checked = false);
@@ -971,7 +956,6 @@
         }
 
         function openEditModalFromGrid(e, id) { e.stopPropagation(); openEditModal(id); }
-        function openEditModalFromCalendar(id) { openEditModal(id); }
         function closeModal() { document.getElementById('ideaModal').classList.add('hidden'); }
 
         async function saveIdeaForm(e) {
@@ -993,29 +977,18 @@
             if (editingId) {
                 const existing = ideas.find(i => i.id === editingId);
                 if (existing) {
-                    existing.title = title; existing.businesses = selectedBiz;
-                    existing.postTypes = selectedPostTypes.length > 0 ? selectedPostTypes : ['Short Form'];
-                    existing.status = status; existing.scheduleTime = scheduleTime;
-                    existing.notes = notes; existing.youtubeUrls = youtubeUrls;
+                    existing.title = title; existing.businesses = selectedBiz; existing.postTypes = selectedPostTypes.length > 0 ? selectedPostTypes : ['Short Form']; existing.status = status; existing.scheduleTime = scheduleTime; existing.notes = notes; existing.youtubeUrls = youtubeUrls;
                     entryToSave = existing;
                 }
             } else {
-                entryToSave = {
-                    id: Date.now().toString(), title, businesses: selectedBiz,
-                    postTypes: selectedPostTypes.length > 0 ? selectedPostTypes : ['Short Form'],
-                    status, scheduleTime, notes, youtubeUrls, scripts: []
-                };
+                entryToSave = { id: Date.now().toString(), title, businesses: selectedBiz, postTypes: selectedPostTypes.length > 0 ? selectedPostTypes : ['Short Form'], status, scheduleTime, notes, youtubeUrls, scripts: [] };
                 activeIdeaId = entryToSave.id;
             }
-
             await saveIdeaToCloud(entryToSave);
             closeModal();
         }
 
-        async function deleteIdea(e, id) {
-            e.stopPropagation();
-            await deleteIdeaFromCloud(id);
-        }
+        async function deleteIdea(e, id) { e.stopPropagation(); await deleteIdeaFromCloud(id); }
     </script>
 </body>
 </html>
