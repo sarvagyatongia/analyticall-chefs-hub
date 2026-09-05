@@ -93,7 +93,7 @@
                     <div class="space-y-2">
                         <span class="text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full uppercase">Tasks</span>
                         <h3 class="text-lg font-bold text-white group-hover:text-emerald-300 transition">To-Do Hub</h3>
-                        <p class="text-xs text-slate-400">Manage tasks across dynamic categories with focus filters.</p>
+                        <p class="text-xs text-slate-400">Manage daily focus goals and backlog tasks across categories.</p>
                     </div>
                     <div class="pt-3 border-t border-slate-800 text-xs font-medium text-emerald-400 flex justify-between">
                         <span id="gatewayPendingCount">0 pending</span>
@@ -117,7 +117,7 @@
                     <div class="space-y-2">
                         <span class="text-[10px] font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2.5 py-1 rounded-full uppercase">Anti-Rot</span>
                         <h3 class="text-lg font-bold text-white group-hover:text-purple-300 transition">Game Progress</h3>
-                        <p class="text-xs text-slate-400">Track XP, domain stats, and analyze performance reports.</p>
+                        <p class="text-xs text-slate-400">Track daily efficiency, XP, domain stats, and reports.</p>
                     </div>
                     <div class="pt-3 border-t border-slate-800 text-xs font-medium text-purple-400 flex justify-between">
                         <span id="gatewayXpDisplay">Level 1 (0 XP)</span>
@@ -140,6 +140,20 @@
                     </button>
                 </div>
             </div>
+
+            <!-- Today's Focus Section Banner -->
+            <div class="bg-gradient-to-r from-emerald-950/40 to-indigo-950/40 border border-emerald-500/30 rounded-2xl p-5 space-y-3 shadow-lg">
+                <div class="flex items-center justify-between border-b border-emerald-500/20 pb-2">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center space-x-2">
+                        <span>⭐ Today's Focus (Daily Execution)</span>
+                    </h3>
+                    <span id="todayFocusCount" class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-semibold">0 targeted</span>
+                </div>
+                <div id="todaysFocusList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <p class="text-xs text-slate-500 italic">No tasks selected for today yet. Click '⭐ Focus Today' on any task below to add it here!</p>
+                </div>
+            </div>
+
             <div id="todoColumnsContainer" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 flex-1"></div>
         </div>
 
@@ -221,14 +235,29 @@
                 </div>
             </div>
 
-            <!-- XP Progress Bar -->
+            <!-- Daily Target Efficiency Card -->
             <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-3 shadow-xl">
                 <div class="flex justify-between items-center text-xs font-medium">
-                    <span class="text-slate-300 uppercase tracking-wider">Overall Quest Progress</span>
-                    <span id="overallPercentageText" class="text-emerald-400 font-bold">0% Complete</span>
+                    <span class="text-slate-300 uppercase tracking-wider">Daily Focus Efficiency (Today's Execution)</span>
+                    <span id="dailyEfficiencyText" class="text-emerald-400 font-bold">0% Completed</span>
                 </div>
                 <div class="w-full bg-slate-950 rounded-full h-3.5 border border-slate-800 overflow-hidden">
-                    <div id="overallProgressBar" class="bg-gradient-to-r from-emerald-500 to-indigo-500 h-full transition-all duration-500" style="width: 0%"></div>
+                    <div id="dailyProgressBar" class="bg-gradient-to-r from-emerald-500 to-blue-500 h-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <div class="flex justify-between text-[11px] text-slate-400 pt-1">
+                    <span id="dailyCompletedCountText">0 completed today</span>
+                    <span id="dailyRemainingCountText">0 remaining today</span>
+                </div>
+            </div>
+
+            <!-- XP Overall Progress Bar -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-3 shadow-xl">
+                <div class="flex justify-between items-center text-xs font-medium">
+                    <span class="text-slate-300 uppercase tracking-wider">Overall Backlog Quest Progress</span>
+                    <span id="overallPercentageText" class="text-indigo-400 font-bold">0% Complete</span>
+                </div>
+                <div class="w-full bg-slate-950 rounded-full h-3.5 border border-slate-800 overflow-hidden">
+                    <div id="overallProgressBar" class="bg-gradient-to-r from-indigo-500 to-purple-500 h-full transition-all duration-500" style="width: 0%"></div>
                 </div>
             </div>
 
@@ -256,9 +285,9 @@
     <div id="categoryModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
             <h2 class="text-lg font-bold text-white">Manage Business Categories</h2>
-            <p class="text-xs text-slate-400">Add custom categories instantly without touching code. All tasks and ideas will support them automatically.</p>
+            <p class="text-xs text-slate-400">Add custom categories instantly without touching code.</p>
             <div class="flex space-x-2">
-                <input type="text" id="newCategoryInput" placeholder="e.g., Marketing, AI Agents" class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
+                <input type="text" id="newCategoryInput" placeholder="e.g., Marketing, AI Agents" class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none">
                 <button onclick="addNewCategory()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-xs font-medium transition">Add</button>
             </div>
             <div class="space-y-2 pt-2 border-t border-slate-800">
@@ -412,7 +441,7 @@
 
         function refreshActiveView() {
             if (currentTab === 'gateway') renderGateway();
-            else if (currentTab === 'todos') renderTodos();
+            else if (currentTab === 'todos') { renderTodaysFocus(); renderTodos(); }
             else if (currentTab === 'vault') renderVault();
             else if (currentTab === 'generator') renderGenerator();
             else if (currentTab === 'calendar') renderCalendar();
@@ -472,29 +501,20 @@
         }
 
         function updateCategoryDropdowns() {
-            // Todo Business Select
             const todoBizSel = document.getElementById('todoModalBusiness');
-            if (todoBizSel) {
-                todoBizSel.innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
-            }
-            // Calendar Biz Filter
+            if (todoBizSel) { todoBizSel.innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join(''); }
             const calFilter = document.getElementById('calendarBizFilter');
-            if (calFilter) {
-                calFilter.innerHTML = `<option value="All">All Businesses</option>` + categories.map(c => `<option value="${c}">${c}</option>`).join('');
-            }
-            // Idea Vault Filters Bar
+            if (calFilter) { calFilter.innerHTML = `<option value="All">All Businesses</option>` + categories.map(c => `<option value="${c}">${c}</option>`).join(''); }
             const vaultFilters = document.getElementById('businessFilters');
             if (vaultFilters) {
                 vaultFilters.innerHTML = `<button onclick="filterBusiness('All')" class="biz-pill px-3.5 py-1.5 rounded-lg text-xs font-medium transition bg-emerald-600/30 text-emerald-300 border border-emerald-500/50" data-biz="All">All Businesses</button>` +
                     categories.map(c => `<button onclick="filterBusiness('${c}')" class="biz-pill px-3.5 py-1.5 rounded-lg text-xs font-medium transition bg-slate-900 text-slate-400 border border-slate-800 hover:border-slate-700" data-biz="${c}">${c}</button>`).join('');
             }
-            // Todo Focus Filter Bar
             const todoFilterContainer = document.getElementById('todoFilterContainer');
             if (todoFilterContainer) {
                 todoFilterContainer.innerHTML = `<button onclick="setTodoFilter('All')" id="todoFilterAll" class="todo-filter-btn px-3 py-1 rounded-lg text-xs font-medium transition bg-emerald-600 text-white">All Columns</button>` +
                     categories.map(c => `<button onclick="setTodoFilter('${c}')" id="todoFilter${c.replace(/[^a-zA-Z0-9]/g, '')}" class="todo-filter-btn px-3 py-1 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white">${c}</button>`).join('');
             }
-            // Idea Modal Checkboxes
             const modalBizCheckboxes = document.getElementById('modalBizCheckboxes');
             if (modalBizCheckboxes) {
                 modalBizCheckboxes.innerHTML = categories.map(c => `
@@ -506,22 +526,16 @@
             }
         }
 
-        function openCategoryManager() {
-            renderExistingCategoriesList();
-            document.getElementById('categoryModal').classList.remove('hidden');
-        }
+        function openCategoryManager() { renderExistingCategoriesList(); document.getElementById('categoryModal').classList.remove('hidden'); }
         function closeCategoryManager() { document.getElementById('categoryModal').classList.add('hidden'); }
 
         async function addNewCategory() {
             const input = document.getElementById('newCategoryInput');
             const val = input.value.trim();
             if (val && !categories.includes(val)) {
-                categories.push(val);
-                input.value = '';
+                categories.push(val); input.value = '';
                 await saveCategoriesToCloud();
-                updateCategoryDropdowns();
-                renderExistingCategoriesList();
-                refreshActiveView();
+                updateCategoryDropdowns(); renderExistingCategoriesList(); refreshActiveView();
             }
         }
 
@@ -529,9 +543,7 @@
             if (categories.length <= 1) { alert("You must keep at least one category."); return; }
             categories = categories.filter(c => c !== cat);
             await saveCategoriesToCloud();
-            updateCategoryDropdowns();
-            renderExistingCategoriesList();
-            refreshActiveView();
+            updateCategoryDropdowns(); renderExistingCategoriesList(); refreshActiveView();
         }
 
         function renderExistingCategoriesList() {
@@ -599,6 +611,43 @@
             renderTodos();
         }
 
+        async function toggleTodayFocus(id) {
+            const task = todos.find(t => t.id === id);
+            if (task) {
+                task.isTodayFocus = !task.isTodayFocus;
+                await saveTodoToCloud(task);
+            }
+        }
+
+        function renderTodaysFocus() {
+            const container = document.getElementById('todaysFocusList');
+            const countBadge = document.getElementById('todayFocusCount');
+            if (!container || !countBadge) return;
+
+            const focusTasks = todos.filter(t => t.isTodayFocus);
+            countBadge.innerText = `${focusTasks.length} targeted`;
+
+            if (focusTasks.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500 italic py-2 col-span-full">No tasks selected for today yet. Click '⭐ Focus Today' on any task below.</p>`;
+                return;
+            }
+
+            container.innerHTML = focusTasks.map(t => `
+                <div class="bg-slate-950 border border-emerald-500/30 p-3 rounded-xl space-y-2 flex flex-col justify-between">
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="flex items-start space-x-2.5">
+                            <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTodo('${t.id}')" class="mt-1 h-4 w-4 rounded bg-slate-900 border-slate-700 text-emerald-600 cursor-pointer">
+                            <div>
+                                <span class="text-[9px] bg-emerald-950 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded">${t.business}</span>
+                                <h4 class="text-xs font-semibold ${t.completed ? 'line-through text-slate-500' : 'text-white'} mt-1">${t.title}</h4>
+                            </div>
+                        </div>
+                        <button onclick="toggleTodayFocus('${t.id}')" class="text-amber-400 hover:text-rose-400 text-xs px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800" title="Remove from today">★</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
         function renderTodos() {
             const containerGrid = document.getElementById('todoColumnsContainer');
             if (!containerGrid) return;
@@ -638,6 +687,7 @@
                                 </div>
                             </div>
                             <div class="flex items-center space-x-1">
+                                <button onclick="toggleTodayFocus('${t.id}')" class="${t.isTodayFocus ? 'text-amber-400 bg-amber-950/40 border-amber-500/30' : 'text-slate-500 bg-slate-900 border-slate-800'} text-[10px] px-1.5 py-0.5 rounded border" title="Focus Today">⭐</button>
                                 <button onclick="openEditTodoModal('${t.id}')" class="text-slate-400 hover:text-emerald-300 text-xs px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800">Edit</button>
                                 <button onclick="deleteTodo('${t.id}')" class="text-rose-400 hover:text-rose-300 text-xs px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800">×</button>
                             </div>
@@ -693,7 +743,7 @@
                 const existing = todos.find(t => t.id === editingId);
                 if (existing) { existing.title = title; existing.business = business; existing.desc = desc; existing.priority = priority; existing.deadline = deadline; todoToSave = existing; }
             } else {
-                todoToSave = { id: Date.now().toString(), title, business, desc, completed: false, priority, deadline };
+                todoToSave = { id: Date.now().toString(), title, business, desc, completed: false, priority, deadline, isTodayFocus: false };
             }
             await saveTodoToCloud(todoToSave);
             closeTodoModal();
@@ -846,8 +896,18 @@
             `).join('');
         }
 
-        // Game Progress & Anti-Rot Tracker Logic
+        // Game Progress & Anti-Rot Tracker Logic with Daily Focus Stats
         function renderProgressTracker() {
+            const focusTasks = todos.filter(t => t.isTodayFocus);
+            const focusTotal = focusTasks.length;
+            const focusDone = focusTasks.filter(t => t.completed).length;
+            const dailyPct = focusTotal > 0 ? Math.round((focusDone / focusTotal) * 100) : 0;
+
+            document.getElementById('dailyEfficiencyText').innerText = `${dailyPct}% Completed (${focusDone}/${focusTotal})`;
+            document.getElementById('dailyProgressBar').style.width = `${dailyPct}%`;
+            document.getElementById('dailyCompletedCountText').innerText = `${focusDone} completed today`;
+            document.getElementById('dailyRemainingCountText').innerText = `${focusTotal - focusDone} remaining today`;
+
             const totalTasks = todos.length;
             const completedTasks = todos.filter(t => t.completed).length;
             const pct = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
@@ -856,7 +916,7 @@
 
             document.getElementById('playerLevelBadge').innerText = `Level ${level} ${level > 2 ? 'Master Builder' : 'Prodigy'}`;
             document.getElementById('playerXpText').innerText = `${xp} Total XP Earned (${completedTasks} Tasks Completed)`;
-            document.getElementById('overallPercentageText').innerText = `${pct}% Complete (${completedTasks}/${totalTasks} Tasks)`;
+            document.getElementById('overallPercentageText').innerText = `${pct}% Complete (${completedTasks}/${totalTasks} Backlog)`;
             document.getElementById('overallProgressBar').style.width = `${pct}%`;
 
             // Domain Stats Grid
@@ -896,10 +956,10 @@
                 return;
             }
 
-            const completed = todos.filter(t => t.completed).length;
-            const pending = todos.filter(t => !t.completed).length;
+            const focusTasks = todos.filter(t => t.isTodayFocus);
+            const focusTotal = focusTasks.length;
+            const focusDone = focusTasks.filter(t => t.completed).length;
             
-            // Find best performing domain
             let bestCat = categories[0];
             let maxDone = -1;
             categories.forEach(cat => {
@@ -907,22 +967,31 @@
                 if (done > maxDone) { maxDone = done; bestCat = cat; }
             });
 
+            let workloadVerdict = "Balanced workload sizing.";
+            if (focusTotal > 0 && focusDone === focusTotal) {
+                workloadVerdict = "🔥 You completed 100% of your daily focus! Consider slightly increasing your daily target tomorrow to challenge yourself.";
+            } else if (focusTotal > 0 && focusDone === 0) {
+                workloadVerdict = "⚠️ 0% completion on today's focus. Watch out for brain rot loops—pick one small task right now to build momentum.";
+            } else if (focusTotal === 0) {
+                workloadVerdict = "📌 You haven't starred any tasks for today's focus yet. Select a few tasks using the ⭐ button in the To-Do Hub!";
+            }
+
             reportContainer.innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                     <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                        <div class="text-slate-400 text-[10px] uppercase">Completed Quests</div>
-                        <div class="text-lg font-bold text-emerald-400">${completed}</div>
+                        <div class="text-slate-400 text-[10px] uppercase">Today's Focus Done</div>
+                        <div class="text-lg font-bold text-emerald-400">${focusDone} / ${focusTotal}</div>
                     </div>
                     <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                        <div class="text-slate-400 text-[10px] uppercase">Pending Backlog</div>
-                        <div class="text-lg font-bold text-amber-400">${pending}</div>
-                    </div>
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                        <div class="text-slate-400 text-[10px] uppercase">Top Domain</div>
+                        <div class="text-slate-400 text-[10px] uppercase">Top Performing Domain</div>
                         <div class="text-lg font-bold text-indigo-400">${bestCat}</div>
                     </div>
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                        <div class="text-slate-400 text-[10px] uppercase">Backlog Total</div>
+                        <div class="text-lg font-bold text-purple-400">${todos.length} Tasks</div>
+                    </div>
                 </div>
-                <p class="text-slate-300">💡 <strong>Anti-Rot Diagnostic:</strong> You are performing strongest in <strong>${bestCat}</strong>. Keep your focus locked here to avoid mindless scrolling loops. Tackle your high-priority pending items during your peak energy hours to maximize your XP gain!</p>
+                <p class="text-slate-300">💡 <strong>Anti-Rot Diagnostic:</strong> ${workloadVerdict}</p>
             `;
         }
 
