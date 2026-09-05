@@ -666,6 +666,7 @@
             if (task) {
                 task.isTodayFocus = !task.isTodayFocus;
                 await saveTodoToCloud(task);
+                if (currentTab === 'progress') { renderProgressTracker(); }
             }
         }
 
@@ -676,6 +677,7 @@
                 if (task.archived) task.isTodayFocus = false;
                 await saveTodoToCloud(task);
                 renderArchiveModal();
+                if (currentTab === 'progress') { renderProgressTracker(); }
             }
         }
 
@@ -918,6 +920,7 @@
             }
             await saveTodoToCloud(todoToSave);
             closeTodoModal();
+            if (currentTab === 'progress') { renderProgressTracker(); }
         }
 
         async function toggleTodo(id) {
@@ -926,12 +929,21 @@
                 item.completed = !item.completed;
                 if (item.completed) item.archived = true;
                 await saveTodoToCloud(item);
-                // Force immediate refresh if currently on progress view
-                if (currentTab === 'progress') { renderProgressTracker(); }
+                
+                // Force immediate refresh of Today's focus and progress tracker views if open
+                if (currentTab === 'todos') {
+                    renderTodaysFocus();
+                    renderTodos();
+                } else if (currentTab === 'progress') {
+                    renderProgressTracker();
+                }
             }
         }
 
-        async function deleteTodo(id) { await deleteTodoFromCloud(id); }
+        async function deleteTodo(id) { 
+            await deleteTodoFromCloud(id);
+            if (currentTab === 'progress') { renderProgressTracker(); }
+        }
 
         function filterBusiness(biz) {
             activeBusiness = biz;
@@ -1253,7 +1265,7 @@ General Rules:
         }
 
         function openEditModalFromGrid(e, id) { e.stopPropagation(); openEditModal(id); }
-        function closeModal() { document.getElementById('ideaModal').classList.add('hidden'); }
+        function closeModal() { document.getElementById('ideaModal'].classList.add('hidden'); }
 
         async function saveIdeaForm(e) {
             e.preventDefault();
@@ -1278,7 +1290,7 @@ General Rules:
                     entryToSave = existing;
                 }
             } else {
-                entryToSave = { id: Date.now().toString(), title, businesses: selectedBiz, postTypes: selectedPostTypes.length >0 ? selectedPostTypes : ['Short Form'], status, scheduleTime, notes, youtubeUrls, scripts: [], archived: false };
+                entryToSave = { id: Date.now().toString(), title, businesses: selectedBiz, postTypes: selectedPostTypes.length > 0 ? selectedPostTypes : ['Short Form'], status, scheduleTime, notes, youtubeUrls, scripts: [], archived: false };
                 activeIdeaId = entryToSave.id;
             }
             await saveIdeaToCloud(entryToSave);
