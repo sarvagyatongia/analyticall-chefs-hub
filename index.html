@@ -380,10 +380,10 @@
         </div>
     </div>
 
-    <!-- Modal for To-Do Items -->
+    <!-- Modal for To-Do Items with Interactive Popup Calendar Picker -->
     <div id="todoModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl">
-            <h2 id="todoModalHeaderTitle" class="text-lg font-bold text-white mb-4">Add New Task</h2>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
+            <h2 id="todoModalHeaderTitle" class="text-lg font-bold text-white">Add New Task</h2>
             <form onsubmit="saveTodoForm(event)" class="space-y-4">
                 <input type="hidden" id="editingTodoId" value="">
                 <div>
@@ -408,9 +408,13 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-400 mb-1">Deadline</label>
-                        <input type="datetime-local" id="todoModalDeadline" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none">
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Deadline Date</label>
+                        <input type="date" id="todoModalDeadlineDate" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none">
                     </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Deadline Time (Optional)</label>
+                    <input type="time" id="todoModalDeadlineTime" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none" value="23:59">
                 </div>
                 <div class="flex justify-end space-x-3 pt-4 border-t border-slate-800">
                     <button type="button" onclick="closeTodoModal()" class="px-4 py-2 rounded-lg text-sm text-slate-400 hover:text-white transition">Cancel</button>
@@ -591,6 +595,14 @@
             }
         }
 
+        function formatDeadlineDisplay(deadlineStr) {
+            if (!deadlineStr) return '';
+            const dateObj = new Date(deadlineStr);
+            if (isNaN(dateObj)) return deadlineStr;
+            const options = { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            return dateObj.toLocaleDateString('en-US', options);
+        }
+
         function getCountdown(deadlineStr) {
             if (!deadlineStr) return '';
             const diff = new Date(deadlineStr) - new Date();
@@ -643,7 +655,7 @@
             const task = todos.find(t => t.id === id);
             if (task) {
                 task.archived = !task.archived;
-                if (task.archived) task.isTodayFocus = false; // remove from focus when archived
+                if (task.archived) task.isTodayFocus = false;
                 await saveTodoToCloud(task);
                 renderArchiveModal();
             }
@@ -660,7 +672,7 @@
             const countBadge = document.getElementById('archiveTotalCount');
             if (!container || !countBadge) return;
 
-            const archivedTasks = todos.filter(t => t.archived || t.completed); // show completed/archived
+            const archivedTasks = todos.filter(t => t.archived || t.completed);
             countBadge.innerText = `${archivedTasks.length} archived`;
 
             if (archivedTasks.length === 0) {
@@ -704,6 +716,7 @@
                             <div>
                                 <span class="text-[9px] bg-emerald-950 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded">${t.business}</span>
                                 <h4 class="text-xs font-semibold ${t.completed ? 'line-through text-slate-500' : 'text-white'} mt-1">${t.title}</h4>
+                                ${t.deadline ? `<span class="text-[10px] text-slate-400 block mt-0.5">📅 Due: ${formatDeadlineDisplay(t.deadline)}</span>` : ''}
                             </div>
                         </div>
                         <div class="flex items-center space-x-1">
@@ -735,7 +748,6 @@
                 const countEl = document.getElementById('count' + cleanKey);
                 if (!listEl || !countEl) return;
 
-                // Hide archived tasks from main columns to eliminate clutter
                 const bizTodos = getSortedTodos(todos.filter(t => t.business === biz && !t.archived));
                 countEl.innerText = bizTodos.length;
 
@@ -763,7 +775,7 @@
                         </div>
                         <div class="flex items-center justify-between text-[10px] pt-2 border-t border-slate-900">
                             <span class="px-2 py-0.5 rounded border ${t.priority === 'High' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : t.priority === 'Medium' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-slate-800 text-slate-400 border-slate-700'}">${t.priority}</span>
-                            ${t.deadline ? getCountdown(t.deadline) : '<span class="text-slate-500">No deadline</span>'}
+                            ${t.deadline ? `<span class="text-emerald-400 font-medium">📅 ${formatDeadlineDisplay(t.deadline)}</span>` : '<span class="text-slate-500">No deadline</span>'}
                         </div>
                     </div>
                 `).join('');
@@ -776,9 +788,14 @@
             document.getElementById('todoModalSubmitBtn').innerText = 'Save Task';
             document.getElementById('todoModalTitle').value = '';
             document.getElementById('todoModalDesc').value = '';
-            document.getElementById('todoModalDeadline').value = '';
             document.getElementById('todoModalBusiness').value = activeTodoFilter !== 'All' ? activeTodoFilter : categories[0];
             document.getElementById('todoModalPriority').value = 'Medium';
+            
+            // Default date picker to today
+            const todayStr = new Date().toISOString().split('T')[0];
+            document.getElementById('todoModalDeadlineDate').value = todayStr;
+            document.getElementById('todoModalDeadlineTime').value = '23:59';
+            
             document.getElementById('todoModal').classList.remove('hidden');
         }
 
@@ -792,7 +809,16 @@
             document.getElementById('todoModalBusiness').value = task.business || categories[0];
             document.getElementById('todoModalDesc').value = task.desc || '';
             document.getElementById('todoModalPriority').value = task.priority || 'Medium';
-            document.getElementById('todoModalDeadline').value = task.deadline || '';
+
+            if (task.deadline) {
+                const parts = task.deadline.split('T');
+                document.getElementById('todoModalDeadlineDate').value = parts[0] || '';
+                document.getElementById('todoModalDeadlineTime').value = parts[1] || '23:59';
+            } else {
+                document.getElementById('todoModalDeadlineDate').value = '';
+                document.getElementById('todoModalDeadlineTime').value = '23:59';
+            }
+
             document.getElementById('todoModal').classList.remove('hidden');
         }
 
@@ -805,7 +831,10 @@
             const business = document.getElementById('todoModalBusiness').value;
             const desc = document.getElementById('todoModalDesc').value;
             const priority = document.getElementById('todoModalPriority').value;
-            const deadline = document.getElementById('todoModalDeadline').value;
+            
+            const dateVal = document.getElementById('todoModalDeadlineDate').value;
+            const timeVal = document.getElementById('todoModalDeadlineTime').value || '23:59';
+            const deadline = dateVal ? `${dateVal}T${timeVal}` : '';
 
             let todoToSave;
             if (editingId) {
@@ -822,7 +851,7 @@
             const item = todos.find(t => t.id === id);
             if (item) {
                 item.completed = !item.completed;
-                if (item.completed) item.archived = true; // Auto-archive on completion to keep hub clean
+                if (item.completed) item.archived = true;
                 await saveTodoToCloud(item);
             }
         }
@@ -980,7 +1009,6 @@
             document.getElementById('dailyCompletedCountText').innerText = `${focusDone} completed today`;
             document.getElementById('dailyRemainingCountText').innerText = `${focusTotal - focusDone} remaining today`;
 
-            const activeTodos = todos.filter(t => !t.archived);
             const totalTasks = todos.length;
             const completedTasks = todos.filter(t => t.completed || t.archived).length;
             const pct = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
