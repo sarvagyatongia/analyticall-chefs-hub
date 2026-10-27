@@ -37,10 +37,9 @@
         window.initFirebaseSync();
     </script>
     <style>
-        /* Custom glow and smooth transition animations for mindmap nodes */
         @keyframes floatPulse {
             0%, 100% { transform: translateY(0) scale(1); }
-            50% { transform: translateY(-6px) scale(1.02); }
+            50% { transform: translateY(-8px) scale(1.03); }
         }
         .mindmap-node {
             animation: floatPulse 4s ease-in-out infinite;
@@ -49,7 +48,6 @@
             animation-duration: 5s;
             animation-delay: 1s;
         }
-        /* Custom scrollbar styling */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #020617; }
         ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
@@ -59,7 +57,7 @@
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col selection:bg-emerald-500 selection:text-white">
 
     <!-- Top Navigation Bar -->
-    <header class="border-b border-slate-800/80 bg-slate-900/70 backdrop-blur sticky top-0 z-40 px-6 py-3.5 flex items-center justify-between">
+    <header class="border-b border-slate-800/80 bg-slate-900/80 backdrop-blur sticky top-0 z-40 px-6 py-3.5 flex items-center justify-between">
         <div class="flex items-center space-x-3 cursor-pointer" onclick="switchView('mindmap')">
             <div class="h-9 w-11 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center px-1 shadow-lg shadow-emerald-500/10">
                 <div class="flex items-end space-x-0.5 h-5">
@@ -93,28 +91,26 @@
     <!-- Main Container Viewport -->
     <main class="flex-1 w-full mx-auto flex flex-col relative overflow-hidden">
         
-        <!-- ================= VIEW 1: IMMERSIVE MINDMAP LAUNCHER ================= -->
+        <!-- ================= VIEW 1: IMMERSIVE BUBBLE MINDMAP LAUNCHER ================= -->
         <div id="view-mindmap" class="flex-1 flex flex-col items-center justify-center p-6 relative min-h-[calc(100vh-70px)]">
-            <!-- Background Grid Accent -->
             <div class="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-40 pointer-events-none"></div>
 
             <div class="text-center space-y-2 max-w-xl z-10 mb-6">
                 <span class="text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full uppercase tracking-widest">Command Center Core</span>
                 <h2 class="text-3xl font-extrabold tracking-tight text-white">Choose Your Department</h2>
-                <p class="text-xs text-slate-400">Click any bubbling node below to dive deep into its task hub, idea vault, and progress metrics.</p>
+                <p class="text-xs text-slate-400">Click any bubbling node below to dive deep into its task hub, 3-3-3 rule execution, and idea vault.</p>
             </div>
 
             <!-- Mindmap Orbit Layout -->
             <div class="relative w-full max-w-4xl h-[460px] flex items-center justify-center z-10">
-                
                 <!-- Central Hub Bubble -->
-                <div onclick="openCentralHub()" class="mindmap-node group absolute z-20 cursor-pointer flex flex-col items-center justify-center w-32 h-32 rounded-full bg-gradient-to-br from-emerald-600 via-emerald-700 to-slate-900 border-4 border-emerald-400/50 shadow-2xl shadow-emerald-600/40 transition transform hover:scale-105">
+                <div onclick="openCentralHub()" class="mindmap-node group absolute z-20 cursor-pointer flex flex-col items-center justify-center w-36 h-36 rounded-full bg-gradient-to-br from-emerald-600 via-emerald-700 to-slate-900 border-4 border-emerald-400/60 shadow-2xl shadow-emerald-600/40 transition transform hover:scale-105">
                     <span class="text-2xl mb-1">👑</span>
                     <h3 class="text-[11px] font-black tracking-wider text-white text-center px-2">ANALYTICALL CHEFS</h3>
                     <span class="text-[9px] text-emerald-200 mt-0.5">Core Hub</span>
                 </div>
 
-                <!-- Orbit Nodes Container (Generated Dynamically via JS based on Categories) -->
+                <!-- Orbit Nodes Container -->
                 <div id="mindmapOrbitNodes" class="absolute inset-0 flex items-center justify-center pointer-events-none"></div>
             </div>
 
@@ -142,20 +138,28 @@
                     </div>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <button onclick="openTodoModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-xl text-xs font-medium transition shadow">+ Add Task</button>
-                    <button onclick="openIdeaModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-2 rounded-xl text-xs font-medium transition shadow">+ Capture Idea</button>
+                    <button onclick="openTodoModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-xl text-xs font-medium transition shadow">+ Add Task (3-3-3)</button>
+                    <button onclick="openIdeaModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-2 rounded-xl text-xs font-medium transition shadow">+ Capture Idea & Google Doc</button>
                 </div>
             </div>
 
             <!-- Department Sub-Tabs -->
             <div class="flex space-x-2 border-b border-slate-800 pb-3">
-                <button onclick="setDeptTab('todos')" id="dept-tab-btn-todos" class="px-4 py-2 rounded-xl text-xs font-semibold transition bg-emerald-600 text-white shadow">📋 Tasks & Deadlines</button>
-                <button onclick="setDeptTab('vault')" id="dept-tab-btn-vault" class="px-4 py-2 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-slate-900">💡 Idea Vault & Scripts</button>
+                <button onclick="setDeptTab('todos')" id="dept-tab-btn-todos" class="px-4 py-2 rounded-xl text-xs font-semibold transition bg-emerald-600 text-white shadow">📋 3-3-3 Task Engine</button>
+                <button onclick="setDeptTab('vault')" id="dept-tab-btn-vault" class="px-4 py-2 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-slate-900">💡 Idea Vault & Google Docs</button>
                 <button onclick="setDeptTab('progress')" id="dept-tab-btn-progress" class="px-4 py-2 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-slate-900">🎮 Performance & Anti-Rot</button>
             </div>
 
-            <!-- Dept Sub-View 1: Tasks -->
-            <div id="dept-subview-todos" class="space-y-4 flex-1">
+            <!-- Dept Sub-View 1: 3-3-3 Tasks -->
+            <div id="dept-subview-todos" class="space-y-6 flex-1">
+                <!-- 3-3-3 Rule Banner Explanation -->
+                <div class="bg-gradient-to-r from-emerald-950/40 via-slate-900 to-indigo-950/40 border border-emerald-500/30 rounded-2xl p-4 text-xs text-slate-300 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div>
+                        <span class="font-bold text-emerald-400 uppercase tracking-wider block mb-1">⚡ The 3-3-3 Daily Productivity Rule</span>
+                        <p class="text-slate-400">Structure your day cleanly: <strong>3 Hours</strong> of Deep Work, <strong>3 Urgent/Shorter Tasks</strong>, and <strong>3 Maintenance Activities</strong> to prevent overwhelm.</p>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-5" id="deptTodosGrid"></div>
             </div>
 
@@ -193,26 +197,49 @@
                 </button>
             </div>
 
-            <div id="accountabilityReportBox" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 space-y-6 text-sm leading-relaxed text-slate-200 shadow-xl font-mono">
-                <!-- Populated dynamically -->
-            </div>
+            <div id="accountabilityReportBox" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 space-y-6 text-sm leading-relaxed text-slate-200 shadow-xl font-mono"></div>
         </div>
 
     </main>
 
+    <!-- ================= PUSH NOTIFICATION ALERT MODAL ================= -->
+    <div id="urgentPushModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border-2 border-rose-500/60 rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h2 class="text-base font-bold text-white flex items-center space-x-2">
+                    <span>🚨 Urgent Action Required</span>
+                </h2>
+                <span class="text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded-full font-semibold">Priority Alert</span>
+            </div>
+            <p class="text-xs text-slate-300">You have pending high-priority tasks with upcoming deadlines that require your immediate attention to prevent procrastination loops:</p>
+            <div id="urgentTaskListContainer" class="space-y-2.5 max-h-[45vh] overflow-y-auto pr-1"></div>
+            <div class="flex justify-end pt-3 border-t border-slate-800">
+                <button onclick="closeUrgentPushModal()" class="px-4 py-2 rounded-lg text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white transition shadow">Got it, Let's Execute Now →</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ================= MODALS ================= -->
 
-    <!-- Modal for Task Add/Edit -->
+    <!-- Modal for Task Add/Edit with 3-3-3 Category -->
     <div id="todoModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
-            <h2 id="todoModalTitle" class="text-lg font-bold text-white">Add Department Task</h2>
+            <h2 id="todoModalTitle" class="text-lg font-bold text-white">Add Task (3-3-3 Rule)</h2>
             <form onsubmit="saveTodoForm(event)" class="space-y-4">
                 <input type="hidden" id="editingTodoId" value="">
                 <div>
                     <label class="block text-xs font-medium text-slate-400 mb-1">Task Title</label>
-                    <input type="text" id="todoModalInputTitle" required placeholder="e.g., Finalize financial model projection" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
+                    <input type="text" id="todoModalInputTitle" required placeholder="e.g., Deep dive financial modeling" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">3-3-3 Category Slot</label>
+                        <select id="todoModalTypeSlot" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none">
+                            <option value="3 Hours Deep Work">3 Hours Deep Work</option>
+                            <option value="3 Urgent/Shorter Tasks">3 Urgent/Shorter Task</option>
+                            <option value="3 Maintenance Activities">3 Maintenance Activity</option>
+                        </select>
+                    </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-400 mb-1">Priority</label>
                         <select id="todoModalPriority" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none">
@@ -221,14 +248,14 @@
                             <option value="Low">Low</option>
                         </select>
                     </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-400 mb-1">Deadline Date & Time</label>
-                        <input type="datetime-local" id="todoModalDeadline" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none">
-                    </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Description</label>
-                    <textarea id="todoModalDesc" rows="2" placeholder="Add specific milestones or notes..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none resize-none"></textarea>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Deadline Date & Time (For Accountability)</label>
+                    <input type="datetime-local" id="todoModalDeadline" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Description / Notes</label>
+                    <textarea id="todoModalDesc" rows="2" placeholder="Add specific milestones..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none resize-none"></textarea>
                 </div>
                 <div class="flex justify-end space-x-3 pt-3 border-t border-slate-800">
                     <button type="button" onclick="closeTodoModal()" class="px-4 py-2 rounded-lg text-xs text-slate-400 hover:text-white">Cancel</button>
@@ -238,10 +265,10 @@
         </div>
     </div>
 
-    <!-- Modal for Idea Add/Edit -->
+    <!-- Modal for Idea Add/Edit with Google Doc Link -->
     <div id="ideaModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-4">
-            <h2 id="ideaModalTitle" class="text-lg font-bold text-white">Capture Department Idea</h2>
+            <h2 id="ideaModalTitle" class="text-lg font-bold text-white">Capture Idea & Google Doc</h2>
             <form onsubmit="saveIdeaForm(event)" class="space-y-4">
                 <input type="hidden" id="editingIdeaId" value="">
                 <div>
@@ -280,7 +307,7 @@
     <div id="categoryModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
             <h2 class="text-lg font-bold text-white">Manage Department Nodes</h2>
-            <p class="text-xs text-slate-400">Add custom nodes to expand your mindmap instantly.</p>
+            <p class="text-xs text-slate-400">Add custom nodes to expand your bubble mindmap instantly.</p>
             <div class="flex space-x-2">
                 <input type="text" id="newCategoryInput" placeholder="e.g., Marketing, AI Agents" class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none">
                 <button onclick="addNewCategory()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-xs font-medium transition">Add Node</button>
@@ -303,6 +330,7 @@
         let currentView = 'mindmap'; // 'mindmap', 'department', 'accountability'
         let activeDepartment = 'Skills';
         let activeDeptTab = 'todos'; // 'todos', 'vault', 'progress'
+        let hasCheckedUrgentTasks = false;
 
         window.initFirebaseSync = function() {
             window.onSnapshot(window.colIdeas, (snapshot) => {
@@ -315,6 +343,12 @@
                 todos = [];
                 snapshot.forEach((docSnap) => { todos.push({ id: docSnap.id, ...docSnap.data() }); });
                 refreshActiveView();
+
+                // Check urgent tasks for push alert popup on startup
+                if (!hasCheckedUrgentTasks) {
+                    hasCheckedUrgentTasks = true;
+                    checkUrgentTasksAlert();
+                }
             });
 
             window.onSnapshot(window.doc(window.db, "metadata", "config"), (docSnap) => {
@@ -324,6 +358,30 @@
                 refreshActiveView();
             });
         };
+
+        function checkUrgentTasksAlert() {
+            const urgentList = todos.filter(t => !t.completed && !t.archived && t.priority === 'High');
+            if (urgentList.length > 0) {
+                const container = document.getElementById('urgentTaskListContainer');
+                if (container) {
+                    container.innerHTML = urgentList.map(t => `
+                        <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl flex items-center justify-between">
+                            <div>
+                                <span class="text-[9px] bg-rose-950 text-rose-300 border border-rose-500/30 px-1.5 py-0.5 rounded">${t.business}</span>
+                                <h4 class="text-xs font-semibold text-white mt-1">${t.title}</h4>
+                                <span class="text-[10px] text-slate-400">Slot: ${t.typeSlot || 'General'}</span>
+                            </div>
+                            <button onclick="openDepartment('${t.business}'); closeUrgentPushModal();" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded transition">Execute Now</button>
+                        </div>
+                    `).join('');
+                    document.getElementById('urgentPushModal').classList.remove('hidden');
+                }
+            }
+        }
+
+        function closeUrgentPushModal() {
+            document.getElementById('urgentPushModal').classList.add('hidden');
+        }
 
         async function saveCategoriesToCloud() {
             await window.setDoc(window.doc(window.db, "metadata", "config"), { categories });
@@ -367,7 +425,7 @@
             ['todos', 'vault', 'progress'].forEach(t => {
                 const sub = document.getElementById('dept-subview-' + t);
                 const btn = document.getElementById('dept-tab-btn-' + t);
-                if (sub) sub.style.display = (t === tabName) ? 'block' : 'hidden';
+                if (sub) sub.style.display = (t === tabName) ? 'block' : 'none';
                 if (btn) {
                     btn.className = (t === tabName)
                         ? "px-4 py-2 rounded-xl text-xs font-semibold transition bg-emerald-600 text-white shadow"
@@ -392,7 +450,7 @@
             if (!container) return;
 
             const total = categories.length;
-            const radius = 180; // adjusted radius in pixels for flawless visibility
+            const radius = 180;
 
             container.innerHTML = categories.map((cat, index) => {
                 const angle = (index / total) * 2 * Math.PI - Math.PI / 2;
@@ -413,19 +471,10 @@
 
         function renderDepartmentSubView() {
             if (activeDeptTab === 'todos') {
-                document.getElementById('dept-subview-todos').style.display = 'block';
-                document.getElementById('dept-subview-vault').style.display = 'none';
-                document.getElementById('dept-subview-progress').style.display = 'none';
                 renderDeptTodos();
             } else if (activeDeptTab === 'vault') {
-                document.getElementById('dept-subview-todos').style.display = 'none';
-                document.getElementById('dept-subview-vault').style.display = 'block';
-                document.getElementById('dept-subview-progress').style.display = 'none';
                 renderDeptVault();
             } else if (activeDeptTab === 'progress') {
-                document.getElementById('dept-subview-todos').style.display = 'none';
-                document.getElementById('dept-subview-vault').style.display = 'none';
-                document.getElementById('dept-subview-progress').style.display = 'block';
                 renderDeptProgress();
             }
         }
@@ -435,29 +484,47 @@
             if (!grid) return;
             const deptTodos = todos.filter(t => t.business === activeDepartment && !t.archived);
 
-            if (deptTodos.length === 0) {
-                grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-500 text-xs italic">No active tasks in ${activeDepartment}. Click '+ Add Task' to begin.</div>`;
-                return;
-            }
+            const slots = ['3 Hours Deep Work', '3 Urgent/Shorter Tasks', '3 Maintenance Activities'];
 
-            grid.innerHTML = deptTodos.map(t => `
-                <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-xl space-y-3 flex flex-col justify-between">
-                    <div class="flex items-start justify-between gap-2">
-                        <div class="flex items-start space-x-2.5">
-                            <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTodo('${t.id}')" class="mt-1 h-4 w-4 rounded bg-slate-950 border-slate-700 text-emerald-600 cursor-pointer">
-                            <div>
-                                <h4 class="text-xs font-bold ${t.completed ? 'line-through text-slate-500' : 'text-slate-200'}">${t.title}</h4>
-                                ${t.desc ? `<p class="text-[11px] text-slate-400 mt-1">${t.desc}</p>` : ''}
+            grid.innerHTML = slots.map(slot => {
+                const slotTasks = deptTodos.filter(t => (t.typeSlot || '3 Hours Deep Work') === slot);
+                return `
+                    <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-xl space-y-3 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
+                                <h4 class="text-xs font-bold text-emerald-400">${slot}</h4>
+                                <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">${slotTasks.filter(t => t.completed).length}/${slotTasks.length}</span>
+                            </div>
+                            <div class="space-y-2.5">
+                                ${slotTasks.length === 0 ? `<p class="text-[11px] text-slate-500 italic py-2">No tasks in this slot.</p>` : slotTasks.map(t => `
+                                    <div class="bg-slate-950 border border-slate-800 p-2.5 rounded-lg space-y-1.5">
+                                        <div class="flex items-start justify-between gap-2">
+                                            <div class="flex items-start space-x-2">
+                                                <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTodo('${t.id}')" class="mt-0.5 h-4 w-4 rounded bg-slate-900 border-slate-700 text-emerald-600 cursor-pointer">
+                                                <div>
+                                                    <h5 class="text-xs font-bold ${t.completed ? 'line-through text-slate-500' : 'text-slate-200'}">${t.title}</h5>
+                                                    ${t.desc ? `<p class="text-[10px] text-slate-400 mt-0.5">${t.desc}</p>` : ''}
+                                                </div>
+                                            </div>
+                                            <button onclick="deleteTodo('${t.id}')" class="text-slate-600 hover:text-rose-400 text-xs">×</button>
+                                        </div>
+                                        <div class="flex items-center justify-between text-[9px] pt-1 border-t border-slate-900">
+                                            <span class="px-1.5 py-0.5 rounded border ${t.priority === 'High' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-slate-800 text-slate-400 border-slate-700'}">${t.priority}</span>
+                                            ${t.deadline ? `<span class="text-emerald-400">📅 ${formatDeadlineDisplay(t.deadline)}</span>` : '<span class="text-slate-500">No deadline</span>'}
+                                        </div>
+                                    </div>
+                                `).join('')}
                             </div>
                         </div>
-                        <button onclick="deleteTodo('${t.id}')" class="text-slate-600 hover:text-rose-400 text-xs">×</button>
+                        <button onclick="openTodoModalWithSlot('${slot}')" class="w-full mt-2 bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 py-1.5 rounded-lg text-xs font-medium transition">+ Add to ${slot}</button>
                     </div>
-                    <div class="flex items-center justify-between text-[10px] pt-2 border-t border-slate-800">
-                        <span class="px-2 py-0.5 rounded border ${t.priority === 'High' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-slate-800 text-slate-400 border-slate-700'}">${t.priority}</span>
-                        ${t.deadline ? `<span class="text-emerald-400 font-medium">📅 ${formatDeadlineDisplay(t.deadline)}</span>` : '<span class="text-slate-500">No deadline</span>'}
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
+        }
+
+        function openTodoModalWithSlot(slot) {
+            document.getElementById('todoModalTypeSlot').value = slot;
+            openTodoModal();
         }
 
         function renderDeptVault() {
@@ -466,7 +533,7 @@
             const deptIdeas = ideas.filter(i => (i.businesses || []).includes(activeDepartment) && !i.archived);
 
             if (deptIdeas.length === 0) {
-                grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-500 text-xs italic">No ideas in ${activeDepartment}. Click '+ Capture Idea' to begin.</div>`;
+                grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-500 text-xs italic">No ideas in ${activeDepartment}. Click '+ Capture Idea & Google Doc' to begin.</div>`;
                 return;
             }
 
@@ -481,7 +548,7 @@
                         <p class="text-xs text-slate-400 line-clamp-3">${i.notes || 'No notes added...'}</p>
                     </div>
                     <div>
-                        ${i.docLink ? `<a href="${i.docLink}" target="_blank" class="text-[11px] text-blue-400 hover:text-blue-300 block mb-2">📄 Open Google Doc Script →</a>` : ''}
+                        ${i.docLink ? `<a href="${i.docLink}" target="_blank" class="text-[11px] text-blue-400 hover:text-blue-300 block mb-2 font-medium">📄 Open Google Doc Script →</a>` : '<span class="text-[10px] text-slate-500 italic block mb-2">No Google Doc linked</span>'}
                     </div>
                 </div>
             `).join('');
@@ -562,6 +629,7 @@ ${deptBreakdownHtml}
         async function saveTodoForm(e) {
             e.preventDefault();
             const title = document.getElementById('todoModalInputTitle').value;
+            const typeSlot = document.getElementById('todoModalTypeSlot').value;
             const priority = document.getElementById('todoModalPriority').value;
             const deadline = document.getElementById('todoModalDeadline').value;
             const desc = document.getElementById('todoModalDesc').value;
@@ -570,6 +638,7 @@ ${deptBreakdownHtml}
                 id: Date.now().toString(),
                 title,
                 business: activeDepartment,
+                typeSlot,
                 priority,
                 deadline,
                 desc,
