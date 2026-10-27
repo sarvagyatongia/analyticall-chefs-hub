@@ -101,7 +101,7 @@
                 <p class="text-xs text-slate-400">Click any bubbling node below to dive deep into its task hub, 3-3-3 rule execution, and idea vault.</p>
             </div>
 
-            <!-- Mindmap Orbit Layout -->
+            <!-- Mindmap Orbit Layout Container -->
             <div class="relative w-full max-w-4xl h-[460px] flex items-center justify-center z-10">
                 <!-- Central Hub Bubble -->
                 <div onclick="openCentralHub()" class="mindmap-node group absolute z-20 cursor-pointer flex flex-col items-center justify-center w-36 h-36 rounded-full bg-gradient-to-br from-emerald-600 via-emerald-700 to-slate-900 border-4 border-emerald-400/60 shadow-2xl shadow-emerald-600/40 transition transform hover:scale-105">
@@ -259,7 +259,7 @@
                 </div>
                 <div class="flex justify-end space-x-3 pt-3 border-t border-slate-800">
                     <button type="button" onclick="closeTodoModal()" class="px-4 py-2 rounded-lg text-xs text-slate-400 hover:text-white">Cancel</button>
-                    <button type="submit" class="px-4 py-2 rounded-lg text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium shadow">Save Task</button>
+                    <button type="submit" id="todoModalSubmitBtn" class="px-4 py-2 rounded-lg text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium shadow">Save Task</button>
                 </div>
             </form>
         </div>
@@ -506,7 +506,10 @@
                                                     ${t.desc ? `<p class="text-[10px] text-slate-400 mt-0.5">${t.desc}</p>` : ''}
                                                 </div>
                                             </div>
-                                            <button onclick="deleteTodo('${t.id}')" class="text-slate-600 hover:text-rose-400 text-xs">×</button>
+                                            <div class="flex items-center space-x-1">
+                                                <button onclick="openEditTodoModal('${t.id}')" class="text-slate-400 hover:text-emerald-300 text-xs px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800" title="Edit Task">✏️</button>
+                                                <button onclick="deleteTodo('${t.id}')" class="text-slate-600 hover:text-rose-400 text-xs">×</button>
+                                            </div>
                                         </div>
                                         <div class="flex items-center justify-between text-[9px] pt-1 border-t border-slate-900">
                                             <span class="px-1.5 py-0.5 rounded border ${t.priority === 'High' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-slate-800 text-slate-400 border-slate-700'}">${t.priority}</span>
@@ -523,7 +526,27 @@
         }
 
         function openTodoModalWithSlot(slot) {
+            document.getElementById('editingTodoId').value = '';
+            document.getElementById('todoModalTitle').innerText = 'Add Task (3-3-3 Rule)';
+            document.getElementById('todoModalSubmitBtn').innerText = 'Save Task';
+            document.getElementById('todoModalInputTitle').value = '';
+            document.getElementById('todoModalDesc').value = '';
+            document.getElementById('todoModalDeadline').value = '';
             document.getElementById('todoModalTypeSlot').value = slot;
+            openTodoModal();
+        }
+
+        function openEditTodoModal(id) {
+            const task = todos.find(t => t.id === id);
+            if (!task) return;
+            document.getElementById('editingTodoId').value = task.id;
+            document.getElementById('todoModalTitle').innerText = 'Edit Task';
+            document.getElementById('todoModalSubmitBtn').innerText = 'Update Task';
+            document.getElementById('todoModalInputTitle').value = task.title || '';
+            document.getElementById('todoModalTypeSlot').value = task.typeSlot || '3 Hours Deep Work';
+            document.getElementById('todoModalPriority').value = task.priority || 'Medium';
+            document.getElementById('todoModalDeadline').value = task.deadline || '';
+            document.getElementById('todoModalDesc').value = task.desc || '';
             openTodoModal();
         }
 
@@ -621,35 +644,53 @@ ${deptBreakdownHtml}
         // Modal Handlers
         function openTodoModal() { document.getElementById('todoModal').classList.remove('hidden'); }
         function closeTodoModal() { document.getElementById('todoModal').classList.add('hidden'); }
-        function openIdeaModal() { document.getElementById('ideaModal').classList.remove('hidden'); }
+        function openIdeaModal() { 
+            document.getElementById('editingIdeaId').value = '';
+            document.getElementById('ideaModalTitle').innerText = 'Capture Idea & Google Doc';
+            document.getElementById('ideaModalInputTitle').value = '';
+            document.getElementById('ideaModalDocLink').value = '';
+            document.getElementById('ideaModalNotes').value = '';
+            document.getElementById('ideaModal').classList.remove('hidden'); 
+        }
         function closeIdeaModal() { document.getElementById('ideaModal').classList.add('hidden'); }
         function openCategoryManager() { renderExistingCategoriesList(); document.getElementById('categoryModal').classList.remove('hidden'); }
         function closeCategoryManager() { document.getElementById('categoryModal').classList.add('hidden'); }
 
         async function saveTodoForm(e) {
             e.preventDefault();
+            const editingId = document.getElementById('editingTodoId').value;
             const title = document.getElementById('todoModalInputTitle').value;
             const typeSlot = document.getElementById('todoModalTypeSlot').value;
             const priority = document.getElementById('todoModalPriority').value;
             const deadline = document.getElementById('todoModalDeadline').value;
             const desc = document.getElementById('todoModalDesc').value;
 
-            const newTodo = {
-                id: Date.now().toString(),
-                title,
-                business: activeDepartment,
-                typeSlot,
-                priority,
-                deadline,
-                desc,
-                completed: false,
-                archived: false
-            };
+            let todoToSave;
+            if (editingId) {
+                const existing = todos.find(t => t.id === editingId);
+                if (existing) {
+                    existing.title = title;
+                    existing.typeSlot = typeSlot;
+                    existing.priority = priority;
+                    existing.deadline = deadline;
+                    existing.desc = desc;
+                    todoToSave = existing;
+                }
+            } else {
+                todoToSave = {
+                    id: Date.now().toString(),
+                    title,
+                    business: activeDepartment,
+                    typeSlot,
+                    priority,
+                    deadline,
+                    desc,
+                    completed: false,
+                    archived: false
+                };
+            }
 
-            await saveTodoToCloud(newTodo);
-            document.getElementById('todoModalInputTitle').value = '';
-            document.getElementById('todoModalDesc').value = '';
-            document.getElementById('todoModalDeadline').value = '';
+            await saveTodoToCloud(todoToSave);
             closeTodoModal();
         }
 
@@ -671,9 +712,6 @@ ${deptBreakdownHtml}
             };
 
             await saveIdeaToCloud(newIdea);
-            document.getElementById('ideaModalInputTitle').value = '';
-            document.getElementById('ideaModalDocLink').value = '';
-            document.getElementById('ideaModalNotes').value = '';
             closeIdeaModal();
         }
 
