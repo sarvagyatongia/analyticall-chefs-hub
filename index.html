@@ -98,19 +98,19 @@
             <!-- Background Grid Accent -->
             <div class="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-40 pointer-events-none"></div>
 
-            <div class="text-center space-y-2 max-w-xl z-10 mb-8">
+            <div class="text-center space-y-2 max-w-xl z-10 mb-6">
                 <span class="text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full uppercase tracking-widest">Command Center Core</span>
                 <h2 class="text-3xl font-extrabold tracking-tight text-white">Choose Your Department</h2>
                 <p class="text-xs text-slate-400">Click any bubbling node below to dive deep into its task hub, idea vault, and progress metrics.</p>
             </div>
 
             <!-- Mindmap Orbit Layout -->
-            <div class="relative w-full max-w-5xl h-[520px] flex items-center justify-center z-10">
+            <div class="relative w-full max-w-4xl h-[460px] flex items-center justify-center z-10">
                 
                 <!-- Central Hub Bubble -->
-                <div onclick="openCentralHub()" class="mindmap-node group absolute z-20 cursor-pointer flex flex-col items-center justify-center w-36 h-36 rounded-full bg-gradient-to-br from-emerald-600 via-emerald-700 to-slate-900 border-4 border-emerald-400/50 shadow-2xl shadow-emerald-600/40 transition transform hover:scale-105">
+                <div onclick="openCentralHub()" class="mindmap-node group absolute z-20 cursor-pointer flex flex-col items-center justify-center w-32 h-32 rounded-full bg-gradient-to-br from-emerald-600 via-emerald-700 to-slate-900 border-4 border-emerald-400/50 shadow-2xl shadow-emerald-600/40 transition transform hover:scale-105">
                     <span class="text-2xl mb-1">👑</span>
-                    <h3 class="text-xs font-black tracking-wider text-white text-center px-2">ANALYTICALL CHEFS</h3>
+                    <h3 class="text-[11px] font-black tracking-wider text-white text-center px-2">ANALYTICALL CHEFS</h3>
                     <span class="text-[9px] text-emerald-200 mt-0.5">Core Hub</span>
                 </div>
 
@@ -118,7 +118,7 @@
                 <div id="mindmapOrbitNodes" class="absolute inset-0 flex items-center justify-center pointer-events-none"></div>
             </div>
 
-            <div class="z-10 mt-6 flex items-center space-x-3">
+            <div class="z-10 mt-4 flex items-center space-x-3">
                 <button onclick="openCategoryManager()" class="bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 px-4 py-2 rounded-xl text-xs font-medium transition shadow-lg flex items-center space-x-2">
                     <span>+ Add New Department Node</span>
                 </button>
@@ -392,7 +392,7 @@
             if (!container) return;
 
             const total = categories.length;
-            const radius = 210; // orbit radius in pixels
+            const radius = 180; // adjusted radius in pixels for flawless visibility
 
             container.innerHTML = categories.map((cat, index) => {
                 const angle = (index / total) * 2 * Math.PI - Math.PI / 2;
@@ -403,7 +403,7 @@
                 const pendingCount = deptTodos.filter(t => !t.completed).length;
 
                 return `
-                    <div onclick="openDepartment('${cat}')" class="mindmap-node absolute cursor-pointer flex flex-col items-center justify-center w-28 h-28 rounded-2xl bg-slate-900/90 border-2 border-emerald-500/40 hover:border-emerald-400 shadow-xl transition transform hover:scale-110 pointer-events-auto p-2 text-center" style="transform: translate(${x}px, ${y}px);">
+                    <div onclick="openDepartment('${cat}')" class="mindmap-node absolute cursor-pointer flex flex-col items-center justify-center w-28 h-28 rounded-2xl bg-slate-900/90 border-2 border-emerald-500/40 hover:border-emerald-400 shadow-xl transition transform hover:scale-110 pointer-events-auto p-2 text-center" style="left: calc(50% + ${x}px - 56px); top: calc(50% + ${y}px - 56px);">
                         <span class="text-xs font-bold text-white truncate max-w-full">${cat}</span>
                         <span class="text-[10px] text-emerald-400 mt-1 bg-emerald-950 px-2 py-0.5 rounded-full border border-emerald-500/30">${pendingCount} tasks</span>
                     </div>
