@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analyticall Chefs - Command Center</title>
+    <title>Analyticall Chefs - Mindmap Command Center</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Firebase SDKs -->
+    <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -36,366 +36,222 @@
 
         window.initFirebaseSync();
     </script>
+    <style>
+        /* Custom glow and smooth transition animations for mindmap nodes */
+        @keyframes floatPulse {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-6px) scale(1.02); }
+        }
+        .mindmap-node {
+            animation: floatPulse 4s ease-in-out infinite;
+        }
+        .mindmap-node:nth-child(even) {
+            animation-duration: 5s;
+            animation-delay: 1s;
+        }
+        /* Custom scrollbar styling */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+    </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col">
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col selection:bg-emerald-500 selection:text-white">
 
-    <!-- Header -->
-    <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur sticky top-0 z-30 px-6 py-3.5 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('gateway')">
-            <div class="h-10 w-12 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center px-1.5 shadow-lg shadow-emerald-500/10">
-                <div class="flex items-end space-x-0.5 h-6">
-                    <div class="w-1.5 bg-emerald-500 rounded-t-sm h-3"></div>
-                    <div class="w-1.5 bg-emerald-500 rounded-t-sm h-4.5"></div>
-                    <div class="w-1.5 bg-emerald-500 rounded-t-sm h-6"></div>
+    <!-- Top Navigation Bar -->
+    <header class="border-b border-slate-800/80 bg-slate-900/70 backdrop-blur sticky top-0 z-40 px-6 py-3.5 flex items-center justify-between">
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="switchView('mindmap')">
+            <div class="h-9 w-11 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center px-1 shadow-lg shadow-emerald-500/10">
+                <div class="flex items-end space-x-0.5 h-5">
+                    <div class="w-1.5 bg-emerald-500 rounded-t-sm h-2.5"></div>
+                    <div class="w-1.5 bg-emerald-500 rounded-t-sm h-4"></div>
+                    <div class="w-1.5 bg-emerald-500 rounded-t-sm h-5"></div>
                 </div>
-                <svg class="h-4 w-4 text-blue-500 -ml-2 -mb-2" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
             </div>
             <div>
-                <h1 class="text-base font-bold tracking-tight text-white hover:text-emerald-400 transition flex items-center space-x-2">
+                <h1 class="text-sm font-bold tracking-tight text-white hover:text-emerald-400 transition flex items-center space-x-2">
                     <span>Analyticall Chefs</span>
-                    <span class="text-[10px] font-normal text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded">Cloud Synced ⚡</span>
+                    <span class="text-[9px] font-normal text-emerald-400 bg-emerald-950/80 border border-emerald-500/30 px-2 py-0.5 rounded-full">Cloud Synced ⚡</span>
                 </h1>
-                <p class="text-[11px] text-slate-400">Executive Assistant & Content Hub</p>
+                <p class="text-[10px] text-slate-400">Mindmap Command & Accountability Hub</p>
             </div>
         </div>
 
-        <div class="flex items-center space-x-2 flex-wrap gap-y-2 justify-center">
-            <button onclick="exportData()" title="Backup Data" class="px-3 py-1.5 rounded-lg text-xs font-medium transition bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700">Export</button>
-            <label title="Restore Data" class="px-3 py-1.5 rounded-lg text-xs font-medium transition bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 cursor-pointer">
-                Import
-                <input type="file" id="importFile" accept=".json" onchange="importData(event)" class="hidden">
-            </label>
-
-            <button onclick="switchTab('gateway')" id="btn-gateway" class="px-3 py-1.5 rounded-lg text-xs font-medium transition bg-emerald-600 text-white shadow-md">Home</button>
-            <button onclick="switchTab('todos')" id="btn-todos" class="px-3 py-1.5 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white hover:bg-slate-800">To-Do Hub</button>
-            <button onclick="switchTab('vault')" id="btn-vault" class="px-3 py-1.5 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white hover:bg-slate-800">Idea Vault</button>
-            <button onclick="switchTab('calendar')" id="btn-calendar" class="px-3 py-1.5 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white hover:bg-slate-800">Calendar</button>
-            <button onclick="switchTab('progress')" id="btn-progress" class="px-3 py-1.5 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white hover:bg-slate-800">🎮 Anti-Rot Tracker</button>
-            
-            <button onclick="openCategoryManager()" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1">
-                <span>⚙️ Categories</span>
+        <div class="flex items-center space-x-2 flex-wrap gap-y-1">
+            <button onclick="switchView('mindmap')" id="nav-btn-mindmap" class="px-3 py-1.5 rounded-lg text-xs font-medium transition bg-emerald-600 text-white shadow-md flex items-center space-x-1.5">
+                <span>🌌 Mindmap Launcher</span>
+            </button>
+            <button onclick="switchView('accountability')" id="nav-btn-accountability" class="px-3 py-1.5 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-1.5">
+                <span>📊 Weekly Accountability Report</span>
+            </button>
+            <button onclick="openCategoryManager()" class="bg-slate-800/80 hover:bg-slate-800 text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1">
+                <span>⚙️ Departments</span>
             </button>
         </div>
     </header>
 
-    <!-- Main Container -->
-    <main class="flex-1 max-w-7xl w-full mx-auto p-6 flex flex-col justify-center">
+    <!-- Main Container Viewport -->
+    <main class="flex-1 w-full mx-auto flex flex-col relative overflow-hidden">
         
-        <!-- Gateway Launchpad View -->
-        <div id="view-gateway" class="flex flex-col items-center justify-center space-y-8 py-10">
-            <div class="text-center space-y-2 max-w-xl">
-                <h2 class="text-2xl font-bold tracking-tight text-white">Select Your Workspace</h2>
-                <p class="text-sm text-slate-400">Choose where you want to go. Real-time cloud sync active.</p>
+        <!-- ================= VIEW 1: IMMERSIVE MINDMAP LAUNCHER ================= -->
+        <div id="view-mindmap" class="flex-1 flex flex-col items-center justify-center p-6 relative min-h-[calc(100vh-70px)]">
+            <!-- Background Grid Accent -->
+            <div class="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-40 pointer-events-none"></div>
+
+            <div class="text-center space-y-2 max-w-xl z-10 mb-8">
+                <span class="text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full uppercase tracking-widest">Command Center Core</span>
+                <h2 class="text-3xl font-extrabold tracking-tight text-white">Choose Your Department</h2>
+                <p class="text-xs text-slate-400">Click any bubbling node below to dive deep into its task hub, idea vault, and progress metrics.</p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
-                <div onclick="switchTab('todos')" class="group bg-slate-900/80 border border-slate-800 hover:border-emerald-500/60 p-6 rounded-2xl cursor-pointer transition flex flex-col justify-between space-y-4 shadow-xl relative overflow-hidden">
-                    <div class="space-y-2">
-                        <span class="text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full uppercase">Tasks</span>
-                        <h3 class="text-lg font-bold text-white group-hover:text-emerald-300 transition">To-Do Hub</h3>
-                        <p class="text-xs text-slate-400">Manage daily focus goals and backlog tasks across categories.</p>
-                    </div>
-                    <div class="pt-3 border-t border-slate-800 text-xs font-medium text-emerald-400 flex justify-between">
-                        <span id="gatewayPendingCount">0 pending</span>
-                        <span>Open →</span>
-                    </div>
+            <!-- Mindmap Orbit Layout -->
+            <div class="relative w-full max-w-5xl h-[520px] flex items-center justify-center z-10">
+                
+                <!-- Central Hub Bubble -->
+                <div onclick="openCentralHub()" class="mindmap-node group absolute z-20 cursor-pointer flex flex-col items-center justify-center w-36 h-36 rounded-full bg-gradient-to-br from-emerald-600 via-emerald-700 to-slate-900 border-4 border-emerald-400/50 shadow-2xl shadow-emerald-600/40 transition transform hover:scale-105">
+                    <span class="text-2xl mb-1">👑</span>
+                    <h3 class="text-xs font-black tracking-wider text-white text-center px-2">ANALYTICALL CHEFS</h3>
+                    <span class="text-[9px] text-emerald-200 mt-0.5">Core Hub</span>
                 </div>
 
-                <div onclick="switchTab('vault')" class="group bg-slate-900/80 border border-slate-800 hover:border-indigo-500/60 p-6 rounded-2xl cursor-pointer transition flex flex-col justify-between space-y-4 shadow-xl relative overflow-hidden">
-                    <div class="space-y-2">
-                        <span class="text-[10px] font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2.5 py-1 rounded-full uppercase">Content</span>
-                        <h3 class="text-lg font-bold text-white group-hover:text-indigo-300 transition">Idea Vault</h3>
-                        <p class="text-xs text-slate-400">Manage raw thoughts, generate dynamic AI prompts, and archive.</p>
-                    </div>
-                    <div class="pt-3 border-t border-slate-800 text-xs font-medium text-indigo-400 flex justify-between">
-                        <span id="gatewayIdeaCount">0 active ideas</span>
-                        <span>Open →</span>
-                    </div>
-                </div>
+                <!-- Orbit Nodes Container (Generated Dynamically via JS based on Categories) -->
+                <div id="mindmapOrbitNodes" class="absolute inset-0 flex items-center justify-center pointer-events-none"></div>
+            </div>
 
-                <div onclick="switchTab('progress')" class="group bg-slate-900/80 border border-slate-800 hover:border-purple-500/60 p-6 rounded-2xl cursor-pointer transition flex flex-col justify-between space-y-4 shadow-xl relative overflow-hidden">
-                    <div class="space-y-2">
-                        <span class="text-[10px] font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2.5 py-1 rounded-full uppercase">Anti-Rot</span>
-                        <h3 class="text-lg font-bold text-white group-hover:text-purple-300 transition">Game Progress</h3>
-                        <p class="text-xs text-slate-400">Track daily efficiency, XP, domain stats, and reports.</p>
-                    </div>
-                    <div class="pt-3 border-t border-slate-800 text-xs font-medium text-purple-400 flex justify-between">
-                        <span id="gatewayXpDisplay">Level 1 (0 XP)</span>
-                        <span>Play →</span>
-                    </div>
-                </div>
+            <div class="z-10 mt-6 flex items-center space-x-3">
+                <button onclick="openCategoryManager()" class="bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 px-4 py-2 rounded-xl text-xs font-medium transition shadow-lg flex items-center space-x-2">
+                    <span>+ Add New Department Node</span>
+                </button>
+                <button onclick="switchView('accountability')" class="bg-purple-950/40 hover:bg-purple-900/50 text-purple-300 border border-purple-500/30 px-4 py-2 rounded-xl text-xs font-medium transition shadow-lg flex items-center space-x-2">
+                    <span>📊 Generate Weekly Accountability Report</span>
+                </button>
             </div>
         </div>
 
-        <!-- To-Do Hub View -->
-        <div id="view-todos" class="hidden flex-col flex-1 space-y-6">
-            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
-                <button onclick="switchTab('gateway')" class="text-xs text-emerald-400 hover:text-emerald-300 flex items-center space-x-1 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg transition">
-                    <span>← Back</span>
-                </button>
-                <div class="flex items-center space-x-2 flex-wrap gap-y-2 justify-center">
-                    <div id="todoFilterContainer" class="bg-slate-900 border border-slate-800 rounded-xl p-1 flex items-center space-x-1 flex-wrap"></div>
-                    <button onclick="openArchiveModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3.5 py-2 rounded-xl text-xs font-medium transition flex items-center space-x-1.5">
-                        <span>📦 Completed Archive</span>
+        <!-- ================= VIEW 2: DEPARTMENT DEEP-DIVE WORKSPACE ================= -->
+        <div id="view-department" class="hidden flex-1 flex flex-col p-6 max-w-7xl mx-auto w-full space-y-6">
+            <!-- Dept Header & Back Button -->
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4 bg-slate-900/80 border border-slate-800 p-5 rounded-2xl shadow-lg">
+                <div class="flex items-center space-x-4">
+                    <button onclick="switchView('mindmap')" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 shadow">
+                        <span>← Return to Mindmap</span>
                     </button>
-                    <button onclick="openTodoModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-medium transition shadow">
-                        + Add Task
-                    </button>
-                </div>
-            </div>
-
-            <!-- Today's Focus Section Banner -->
-            <div class="bg-gradient-to-r from-emerald-950/40 to-indigo-950/40 border border-emerald-500/30 rounded-2xl p-5 space-y-3 shadow-lg">
-                <div class="flex items-center justify-between border-b border-emerald-500/20 pb-2">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center space-x-2">
-                        <span>⭐ Today's Focus (Daily Execution)</span>
-                    </h3>
-                    <span id="todayFocusCount" class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-semibold">0 targeted</span>
-                </div>
-                <div id="todaysFocusList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    <p class="text-xs text-slate-500 italic">No tasks selected for today yet. Click '⭐ Focus Today' on any task below to add it here!</p>
-                </div>
-            </div>
-
-            <div id="todoColumnsContainer" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 flex-1"></div>
-        </div>
-
-        <!-- Vault View -->
-        <div id="view-vault" class="hidden flex-col flex-1 space-y-6">
-            <div class="flex items-center justify-between">
-                <button onclick="switchTab('gateway')" class="text-xs text-emerald-400 hover:text-emerald-300 flex items-center space-x-1 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg transition">
-                    <span>← Back</span>
-                </button>
-                <div class="flex items-center space-x-2">
-                    <button onclick="openIdeaArchiveModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3.5 py-2 rounded-xl text-xs font-medium transition flex items-center space-x-1.5">
-                        <span>📦 Idea Archive</span>
-                    </button>
-                    <button onclick="switchTab('calendar')" class="bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 px-3.5 py-2 rounded-xl text-xs font-medium transition">📅 Calendar Schedule</button>
-                    <button onclick="openModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-medium transition shadow">+ New Idea</button>
-                </div>
-            </div>
-            <div class="flex flex-col md:flex-row gap-4 justify-between items-center">
-                <div class="relative w-full md:w-80">
-                    <input type="text" id="searchInput" oninput="filterIdeas()" placeholder="Search thoughts, tags..." class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500 text-slate-200">
-                </div>
-                <div class="flex flex-wrap gap-2 w-full md:w-auto" id="businessFilters"></div>
-            </div>
-            <div id="ideasGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
-        </div>
-
-        <!-- Script Generator View -->
-        <div id="view-generator" class="hidden flex-col flex-1">
-            <div class="mb-4 flex items-center justify-between">
-                <button onclick="switchTab('vault')" class="text-xs text-emerald-400 hover:text-emerald-300 flex items-center space-x-1 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg transition">
-                    <span>← Back to Vault</span>
-                </button>
-                <div class="flex items-center space-x-2">
-                    <button onclick="toggleIdeaArchiveFromGenerator()" id="generatorArchiveBtn" class="text-xs text-amber-400 hover:text-amber-300 bg-amber-950/40 border border-amber-500/30 px-3 py-1.5 rounded-lg transition">📦 Archive Idea</button>
-                    <button onclick="openEditModal(activeIdeaId)" class="text-xs text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-lg transition">Edit Idea</button>
-                </div>
-            </div>
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1">
-                <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex flex-col space-y-2 h-[calc(100vh-220px)] overflow-y-auto" id="briefSidebar"></div>
-                <div class="lg:col-span-2 bg-slate-900/80 border border-slate-800 rounded-xl p-6 flex flex-col h-[calc(100vh-220px)] overflow-y-auto space-y-6" id="briefMainContent"></div>
-            </div>
-        </div>
-
-        <!-- Calendar View -->
-        <div id="view-calendar" class="hidden flex-col flex-1 space-y-6">
-            <div class="flex items-center justify-between">
-                <button onclick="switchTab('vault')" class="text-xs text-emerald-400 hover:text-emerald-300 flex items-center space-x-1 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg transition">
-                    <span>← Back to Vault</span>
-                </button>
-            </div>
-            <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
-                <div>
-                    <h2 class="text-lg font-bold text-white">Content Calendar Schedule</h2>
-                </div>
-                <div class="flex flex-wrap gap-3 items-center">
-                    <select id="calendarBizFilter" onchange="renderCalendar()" class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none"></select>
-                    <button onclick="openModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-lg text-xs font-medium transition shadow">+ Schedule</button>
-                </div>
-            </div>
-            <div class="bg-slate-900/80 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
-                <table class="w-full text-left border-collapse text-sm">
-                    <thead>
-                        <tr class="border-b border-slate-800 bg-slate-900/90 text-xs text-slate-400 uppercase">
-                            <th class="p-4 font-semibold">Content Name</th>
-                            <th class="p-4 font-semibold">Business</th>
-                            <th class="p-4 font-semibold">Post Type</th>
-                            <th class="p-4 font-semibold">Status</th>
-                            <th class="p-4 font-semibold">Scheduled Date</th>
-                            <th class="p-4 font-semibold text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="calendarTableBody" class="divide-y divide-slate-800/60 text-slate-300"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Progress & Anti-Rot Tracker View -->
-        <div id="view-progress" class="hidden flex-col flex-1 space-y-6">
-            <div class="flex items-center justify-between">
-                <button onclick="switchTab('gateway')" class="text-xs text-emerald-400 hover:text-emerald-300 flex items-center space-x-1 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg transition">
-                    <span>← Back</span>
-                </button>
-                <div class="flex items-center space-x-3 bg-purple-950/40 border border-purple-500/30 px-4 py-2 rounded-xl">
-                    <span class="text-2xl">🎮</span>
                     <div>
-                        <div class="text-xs text-purple-300 font-semibold uppercase tracking-wider" id="playerLevelBadge">Level 1 Prodigy</div>
-                        <div class="text-sm font-bold text-white" id="playerXpText">0 / 100 XP to Next Rank</div>
+                        <span class="text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-0.5 rounded uppercase">Active Workspace</span>
+                        <h2 id="deptTitleHeader" class="text-2xl font-black text-white mt-0.5">Department Name</h2>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="openTodoModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-xl text-xs font-medium transition shadow">+ Add Task</button>
+                    <button onclick="openIdeaModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-2 rounded-xl text-xs font-medium transition shadow">+ Capture Idea</button>
+                </div>
+            </div>
+
+            <!-- Department Sub-Tabs -->
+            <div class="flex space-x-2 border-b border-slate-800 pb-3">
+                <button onclick="setDeptTab('todos')" id="dept-tab-btn-todos" class="px-4 py-2 rounded-xl text-xs font-semibold transition bg-emerald-600 text-white shadow">📋 Tasks & Deadlines</button>
+                <button onclick="setDeptTab('vault')" id="dept-tab-btn-vault" class="px-4 py-2 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-slate-900">💡 Idea Vault & Scripts</button>
+                <button onclick="setDeptTab('progress')" id="dept-tab-btn-progress" class="px-4 py-2 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-slate-900">🎮 Performance & Anti-Rot</button>
+            </div>
+
+            <!-- Dept Sub-View 1: Tasks -->
+            <div id="dept-subview-todos" class="space-y-4 flex-1">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5" id="deptTodosGrid"></div>
+            </div>
+
+            <!-- Dept Sub-View 2: Idea Vault -->
+            <div id="dept-subview-vault" class="hidden space-y-4 flex-1">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="deptIdeasGrid"></div>
+            </div>
+
+            <!-- Dept Sub-View 3: Progress & Anti-Rot -->
+            <div id="dept-subview-progress" class="hidden space-y-5 flex-1">
+                <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-3">
+                    <div class="flex justify-between items-center text-xs font-medium">
+                        <span class="text-slate-300 uppercase tracking-wider">Department Completion Efficiency</span>
+                        <span id="deptEffText" class="text-emerald-400 font-bold">0% Completed</span>
+                    </div>
+                    <div class="w-full bg-slate-950 rounded-full h-3 border border-slate-800 overflow-hidden">
+                        <div id="deptProgressBar" class="bg-gradient-to-r from-emerald-500 to-blue-500 h-full transition-all duration-500" style="width: 0%"></div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Daily Target Efficiency Card -->
-            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-3 shadow-xl">
-                <div class="flex justify-between items-center text-xs font-medium">
-                    <span class="text-slate-300 uppercase tracking-wider">Daily Focus Efficiency (Today's Execution)</span>
-                    <span id="dailyEfficiencyText" class="text-emerald-400 font-bold">0% Completed</span>
+        <!-- ================= VIEW 3: WEEKLY ACCOUNTABILITY REPORT ================= -->
+        <div id="view-accountability" class="hidden flex-1 flex flex-col p-6 max-w-4xl mx-auto w-full space-y-6">
+            <div class="flex items-center justify-between bg-slate-900/80 border border-slate-800 p-5 rounded-2xl shadow-lg">
+                <div class="flex items-center space-x-3">
+                    <button onclick="switchView('mindmap')" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 px-3.5 py-2 rounded-xl text-xs font-semibold transition">← Back</button>
+                    <div>
+                        <h2 class="text-xl font-bold text-white">📊 Weekly Accountability Report</h2>
+                        <p class="text-xs text-slate-400">Review your weekly execution, deadlines met, and copy the summary for your accountability partner.</p>
+                    </div>
                 </div>
-                <div class="w-full bg-slate-950 rounded-full h-3.5 border border-slate-800 overflow-hidden">
-                    <div id="dailyProgressBar" class="bg-gradient-to-r from-emerald-500 to-blue-500 h-full transition-all duration-500" style="width: 0%"></div>
-                </div>
-                <div class="flex justify-between text-[11px] text-slate-400 pt-1">
-                    <span id="dailyCompletedCountText">0 completed today</span>
-                    <span id="dailyRemainingCountText">0 remaining today</span>
-                </div>
+                <button onclick="copyAccountabilityReport()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-xs font-medium transition shadow-lg shadow-indigo-600/30 flex items-center space-x-1.5">
+                    <span>📋 Copy Report for Partner</span>
+                </button>
             </div>
 
-            <!-- XP Overall Progress Bar -->
-            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-3 shadow-xl">
-                <div class="flex justify-between items-center text-xs font-medium">
-                    <span class="text-slate-300 uppercase tracking-wider">Overall Backlog Quest Progress</span>
-                    <span id="overallPercentageText" class="text-indigo-400 font-bold">0% Complete</span>
-                </div>
-                <div class="w-full bg-slate-950 rounded-full h-3.5 border border-slate-800 overflow-hidden">
-                    <div id="overallProgressBar" class="bg-gradient-to-r from-indigo-500 to-purple-500 h-full transition-all duration-500" style="width: 0%"></div>
-                </div>
-            </div>
-
-            <!-- Domain Performance Breakdown Grid -->
-            <div class="space-y-3">
-                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-300">Individual Domain Performance</h3>
-                <div id="domainStatsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-            </div>
-
-            <!-- Anti-Rot Analytical Report Section -->
-            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                    <h3 class="text-sm font-bold uppercase tracking-wider text-indigo-400">📊 Anti-Rot Analytical Report</h3>
-                    <button onclick="generateReport()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition">Refresh Analysis</button>
-                </div>
-                <div id="analyticalReportContent" class="space-y-3 text-xs text-slate-300 leading-relaxed">
-                    Click refresh analysis to generate your performance diagnostic report.
-                </div>
+            <div id="accountabilityReportBox" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 space-y-6 text-sm leading-relaxed text-slate-200 shadow-xl font-mono">
+                <!-- Populated dynamically -->
             </div>
         </div>
 
     </main>
 
-    <!-- Startup Pending Tasks Modal -->
-    <div id="startupPopupModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-emerald-500/40 rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h2 class="text-base font-bold text-white flex items-center space-x-2">
-                    <span>⚡ Pending Tasks & Daily Focus</span>
-                </h2>
-                <span id="startupPendingBadge" class="text-xs bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-semibold">0 pending</span>
-            </div>
-            <p class="text-xs text-slate-400">Here are your active pending tasks. Complete them or jump straight into execution!</p>
-            <div id="startupPendingListContainer" class="space-y-2.5 max-h-[50vh] overflow-y-auto pr-1"></div>
-            <div class="flex justify-end pt-3 border-t border-slate-800">
-                <button onclick="closeStartupPopup()" class="px-4 py-2 rounded-lg text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white transition shadow">Got it, Let's Execute →</button>
-            </div>
-        </div>
-    </div>
+    <!-- ================= MODALS ================= -->
 
-    <!-- Modal for Completed Task Archive -->
-    <div id="archiveModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h2 class="text-lg font-bold text-white flex items-center space-x-2">
-                    <span>📦 Completed Tasks Archive</span>
-                </h2>
-                <span id="archiveTotalCount" class="text-xs bg-slate-800 px-2.5 py-1 rounded text-slate-300">0 archived</span>
-            </div>
-            <p class="text-xs text-slate-400">Here are all the tasks you have successfully completed and archived to keep your hub clean. You can unarchive them anytime if needed.</p>
-            <div id="archiveListContainer" class="space-y-3 overflow-y-auto flex-1 pr-1"></div>
-            <div class="flex justify-end pt-3 border-t border-slate-800">
-                <button onclick="closeArchiveModal()" class="px-4 py-2 rounded-lg text-sm bg-slate-800 text-slate-300 hover:text-white transition">Close Archive</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal for Executed Idea Archive Vault -->
-    <div id="ideaArchiveModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h2 class="text-lg font-bold text-white flex items-center space-x-2">
-                    <span>📦 Executed Idea Archive</span>
-                </h2>
-                <span id="ideaArchiveTotalCount" class="text-xs bg-slate-800 px-2.5 py-1 rounded text-slate-300">0 archived</span>
-            </div>
-            <p class="text-xs text-slate-400">Here are all your executed and published ideas stored away so your active Idea Vault stays clean and focused.</p>
-            <div id="ideaArchiveListContainer" class="space-y-3 overflow-y-auto flex-1 pr-1"></div>
-            <div class="flex justify-end pt-3 border-t border-slate-800">
-                <button onclick="closeIdeaArchiveModal()" class="px-4 py-2 rounded-lg text-sm bg-slate-800 text-slate-300 hover:text-white transition">Close Archive</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal for Dynamic Category Manager -->
-    <div id="categoryModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <!-- Modal for Task Add/Edit -->
+    <div id="todoModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
-            <h2 class="text-lg font-bold text-white">Manage Business Categories</h2>
-            <p class="text-xs text-slate-400">Add custom categories instantly without touching code.</p>
-            <div class="flex space-x-2">
-                <input type="text" id="newCategoryInput" placeholder="e.g., Marketing, AI Agents" class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none">
-                <button onclick="addNewCategory()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-xs font-medium transition">Add</button>
-            </div>
-            <div class="space-y-2 pt-2 border-t border-slate-800">
-                <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Existing Categories</h3>
-                <div id="existingCategoriesList" class="flex flex-wrap gap-2 max-h-40 overflow-y-auto"></div>
-            </div>
-            <div class="flex justify-end pt-3 border-t border-slate-800">
-                <button onclick="closeCategoryManager()" class="px-4 py-2 rounded-lg text-sm bg-slate-800 text-slate-300 hover:text-white transition">Close</button>
-            </div>
+            <h2 id="todoModalTitle" class="text-lg font-bold text-white">Add Department Task</h2>
+            <form onsubmit="saveTodoForm(event)" class="space-y-4">
+                <input type="hidden" id="editingTodoId" value="">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Task Title</label>
+                    <input type="text" id="todoModalInputTitle" required placeholder="e.g., Finalize financial model projection" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Priority</label>
+                        <select id="todoModalPriority" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none">
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Deadline Date & Time</label>
+                        <input type="datetime-local" id="todoModalDeadline" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Description</label>
+                    <textarea id="todoModalDesc" rows="2" placeholder="Add specific milestones or notes..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none resize-none"></textarea>
+                </div>
+                <div class="flex justify-end space-x-3 pt-3 border-t border-slate-800">
+                    <button type="button" onclick="closeTodoModal()" class="px-4 py-2 rounded-lg text-xs text-slate-400 hover:text-white">Cancel</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium shadow">Save Task</button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- Modal for New Idea -->
-    <div id="ideaModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <h2 id="modalHeaderTitle" class="text-lg font-bold text-white mb-4">Capture & Schedule Content</h2>
+    <!-- Modal for Idea Add/Edit -->
+    <div id="ideaModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-4">
+            <h2 id="ideaModalTitle" class="text-lg font-bold text-white">Capture Department Idea</h2>
             <form onsubmit="saveIdeaForm(event)" class="space-y-4">
-                <input type="hidden" id="editingId" value="">
+                <input type="hidden" id="editingIdeaId" value="">
                 <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Content Title</label>
-                    <input type="text" id="modalTitle" required placeholder="e.g., How to think like a Data Analyst" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Businesses / Categories</label>
-                    <div id="modalBizCheckboxes" class="grid grid-cols-2 gap-2 mt-1"></div>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Post Types</label>
-                    <div class="grid grid-cols-3 gap-2 mt-1">
-                        <label class="flex items-center space-x-2 text-xs text-slate-300 bg-slate-950 p-2 rounded border border-slate-800 cursor-pointer">
-                            <input type="checkbox" name="modalPostType" value="Short Form" class="rounded bg-slate-900 border-slate-700 text-emerald-600"><span>Short Form</span>
-                        </label>
-                        <label class="flex items-center space-x-2 text-xs text-slate-300 bg-slate-950 p-2 rounded border border-slate-800 cursor-pointer">
-                            <input type="checkbox" name="modalPostType" value="Long Form" class="rounded bg-slate-900 border-slate-700 text-emerald-600"><span>Long Form</span>
-                        </label>
-                        <label class="flex items-center space-x-2 text-xs text-slate-300 bg-slate-950 p-2 rounded border border-slate-800 cursor-pointer">
-                            <input type="checkbox" name="modalPostType" value="Static" class="rounded bg-slate-900 border-slate-700 text-emerald-600"><span>Static</span>
-                        </label>
-                    </div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Idea Title / Concept</label>
+                    <input type="text" id="ideaModalInputTitle" required placeholder="e.g., How to approach data analyst case studies" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-medium text-slate-400 mb-1">Status</label>
-                        <select id="modalStatus" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none">
+                        <select id="ideaModalStatus" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none">
                             <option value="Idea">Idea</option>
                             <option value="Scripting">Scripting</option>
                             <option value="Shooting">Shooting</option>
@@ -404,93 +260,54 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-400 mb-1">Scheduled Date & Time</label>
-                        <input type="datetime-local" id="modalScheduleTime" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none">
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Google Doc Script Link</label>
+                        <input type="url" id="ideaModalDocLink" placeholder="https://docs.google.com/..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none">
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Google Doc Script Link</label>
-                    <input type="url" id="modalDocLink" placeholder="https://docs.google.com/document/d/..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none">
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Raw Notes & Thoughts</label>
+                    <textarea id="ideaModalNotes" rows="3" placeholder="Outline your talking points..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none resize-none"></textarea>
                 </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Notes & Thoughts</label>
-                    <textarea id="modalNotes" rows="3" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none resize-none"></textarea>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">YouTube / Reference URLs</label>
-                    <textarea id="modalYoutubeUrls" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none resize-none"></textarea>
-                </div>
-                <div class="flex justify-end space-x-3 pt-4 border-t border-slate-800">
-                    <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-lg text-sm text-slate-400 hover:text-white transition">Cancel</button>
-                    <button type="submit" id="modalSubmitBtn" class="px-4 py-2 rounded-lg text-sm bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition">Save & Schedule</button>
+                <div class="flex justify-end space-x-3 pt-3 border-t border-slate-800">
+                    <button type="button" onclick="closeIdeaModal()" class="px-4 py-2 rounded-lg text-xs text-slate-400 hover:text-white">Cancel</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium shadow">Save Idea</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal for To-Do Items with Interactive Popup Calendar Picker -->
-    <div id="todoModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <!-- Modal for Dynamic Department / Category Manager -->
+    <div id="categoryModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
-            <h2 id="todoModalHeaderTitle" class="text-lg font-bold text-white">Add New Task</h2>
-            <form onsubmit="saveTodoForm(event)" class="space-y-4">
-                <input type="hidden" id="editingTodoId" value="">
-                <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Task Title</label>
-                    <input type="text" id="todoModalTitle" required placeholder="e.g., Review analytics dataset" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Business / Category</label>
-                    <select id="todoModalBusiness" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none"></select>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Description</label>
-                    <textarea id="todoModalDesc" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none resize-none"></textarea>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-400 mb-1">Priority</label>
-                        <select id="todoModalPriority" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none">
-                            <option value="Medium">Medium</option>
-                            <option value="High">High</option>
-                            <option value="Low">Low</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-400 mb-1">Deadline Date</label>
-                        <input type="date" id="todoModalDeadlineDate" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Deadline Time (Optional)</label>
-                    <input type="time" id="todoModalDeadlineTime" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none" value="23:59">
-                </div>
-                <div class="flex justify-end space-x-3 pt-4 border-t border-slate-800">
-                    <button type="button" onclick="closeTodoModal()" class="px-4 py-2 rounded-lg text-sm text-slate-400 hover:text-white transition">Cancel</button>
-                    <button type="submit" id="todoModalSubmitBtn" class="px-4 py-2 rounded-lg text-sm bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition">Save Task</button>
-                </div>
-            </form>
+            <h2 class="text-lg font-bold text-white">Manage Department Nodes</h2>
+            <p class="text-xs text-slate-400">Add custom nodes to expand your mindmap instantly.</p>
+            <div class="flex space-x-2">
+                <input type="text" id="newCategoryInput" placeholder="e.g., Marketing, AI Agents" class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none">
+                <button onclick="addNewCategory()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-xs font-medium transition">Add Node</button>
+            </div>
+            <div class="space-y-2 pt-2 border-t border-slate-800">
+                <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Departments</h3>
+                <div id="existingCategoriesList" class="flex flex-col space-y-2 max-h-44 overflow-y-auto"></div>
+            </div>
+            <div class="flex justify-end pt-3 border-t border-slate-800">
+                <button onclick="closeCategoryManager()" class="px-4 py-2 rounded-lg text-xs bg-slate-800 text-slate-300 hover:text-white">Close</button>
+            </div>
         </div>
     </div>
 
-    <!-- Application Script Logic -->
+    <!-- Application JavaScript Logic & Firebase Realtime Sync -->
     <script>
         let ideas = [];
         let todos = [];
-        let categories = ['Skills', 'Abroad', 'Faculty', 'Financial Analytics', 'General'];
-        let activeBusiness = 'All';
-        let activeTodoFilter = 'All';
-        let activeIdeaId = null;
-        let currentTab = 'gateway';
-        let hasShownStartupPopup = false;
-
-        const statusRank = { 'Idea': 1, 'Scripting': 2, 'Shooting': 3, 'Editing': 4, 'Published': 5 };
+        let categories = ['Abroad', 'Skills', 'Faculty', 'Virtual CFO', 'General'];
+        let currentView = 'mindmap'; // 'mindmap', 'department', 'accountability'
+        let activeDepartment = 'Skills';
+        let activeDeptTab = 'todos'; // 'todos', 'vault', 'progress'
 
         window.initFirebaseSync = function() {
             window.onSnapshot(window.colIdeas, (snapshot) => {
                 ideas = [];
                 snapshot.forEach((docSnap) => { ideas.push({ id: docSnap.id, ...docSnap.data() }); });
-                ideas.sort((a, b) => (a.order || 0) - (b.order || 0));
-                if (ideas.length > 0 && !activeIdeaId) activeIdeaId = ideas[0].id;
                 refreshActiveView();
             });
 
@@ -498,70 +315,18 @@
                 todos = [];
                 snapshot.forEach((docSnap) => { todos.push({ id: docSnap.id, ...docSnap.data() }); });
                 refreshActiveView();
-                
-                // Show startup pending popup once upon first sync if not shown yet
-                if (!hasShownStartupPopup) {
-                    hasShownStartupPopup = true;
-                    showStartupPopup();
-                }
             });
 
             window.onSnapshot(window.doc(window.db, "metadata", "config"), (docSnap) => {
                 if (docSnap.exists() && docSnap.data().categories) {
                     categories = docSnap.data().categories;
                 }
-                updateCategoryDropdowns();
                 refreshActiveView();
             });
         };
 
-        function showStartupPopup() {
-            const container = document.getElementById('startupPendingListContainer');
-            const badge = document.getElementById('startupPendingBadge');
-            if (!container || !badge) return;
-
-            const pending = todos.filter(t => !t.completed && !t.archived);
-            badge.innerText = `${pending.length} pending`;
-
-            if (pending.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-500 italic py-4 text-center">🎉 No pending tasks! You are fully caught up.</p>`;
-            } else {
-                container.innerHTML = pending.map(t => `
-                    <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl flex items-center justify-between">
-                        <div class="flex items-center space-x-2.5">
-                            <input type="checkbox" onchange="toggleTodoFromPopup('${t.id}')" class="h-4 w-4 rounded bg-slate-900 border-slate-700 text-emerald-600 cursor-pointer">
-                            <div>
-                                <span class="text-[9px] bg-emerald-950 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded">${t.business}</span>
-                                <h4 class="text-xs font-semibold text-slate-200 mt-0.5">${t.title}</h4>
-                            </div>
-                        </div>
-                        <span class="text-[10px] uppercase px-2 py-0.5 rounded border ${t.priority === 'High' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-slate-900 text-slate-400 border-slate-800'}">${t.priority}</span>
-                    </div>
-                `).join('');
-            }
-            document.getElementById('startupPopupModal').classList.remove('hidden');
-        }
-
-        function closeStartupPopup() {
-            document.getElementById('startupPopupModal').classList.add('hidden');
-        }
-
-        async function toggleTodoFromPopup(id) {
-            await toggleTodo(id);
-            showStartupPopup();
-        }
-
         async function saveCategoriesToCloud() {
             await window.setDoc(window.doc(window.db, "metadata", "config"), { categories });
-        }
-
-        function refreshActiveView() {
-            if (currentTab === 'gateway') renderGateway();
-            else if (currentTab === 'todos') { renderTodaysFocus(); renderTodos(); }
-            else if (currentTab === 'vault') renderVault();
-            else if (currentTab === 'generator') renderGenerator();
-            else if (currentTab === 'calendar') renderCalendar();
-            else if (currentTab === 'progress') renderProgressTracker();
         }
 
         async function saveIdeaToCloud(idea) { await window.setDoc(window.doc(window.db, "ideas", idea.id), idea); }
@@ -569,838 +334,321 @@
         async function saveTodoToCloud(todo) { await window.setDoc(window.doc(window.db, "todos", todo.id), todo); }
         async function deleteTodoFromCloud(id) { await window.deleteDoc(window.doc(window.db, "todos", id)); }
 
-        async function moveIdeaOrder(index, direction) {
-            const filtered = getFilteredIdeas();
-            const targetIndex = index + direction;
-            if (targetIndex < 0 || targetIndex >= filtered.length) return;
-            
-            const itemA = filtered[index];
-            const itemB = filtered[targetIndex];
-            
-            const tempOrder = itemA.order || index;
-            itemA.order = itemB.order || targetIndex;
-            itemB.order = tempOrder;
-
-            await saveIdeaToCloud(itemA);
-            await saveIdeaToCloud(itemB);
-            renderVault();
-        }
-
-        function getFilteredIdeas() {
-            const searchInput = document.getElementById('searchInput');
-            const query = searchInput ? searchInput.value.toLowerCase() : '';
-            return ideas.filter(idea => {
-                if (idea.archived) return false;
-                const matchesSearch = idea.title.toLowerCase().includes(query) || (idea.notes && idea.notes.toLowerCase().includes(query));
-                const matchesBiz = activeBusiness === 'All' || (idea.businesses && idea.businesses.includes(activeBusiness));
-                return matchesSearch && matchesBiz;
-            });
-        }
-
-        function exportData() {
-            const dataObj = { ideas, todos, categories };
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataObj, null, 2));
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `analyticall-chefs-command-center-${new Date().toISOString().split('T')[0]}.json`);
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
-        }
-
-        async function importData(event) {
-            const fileReader = new FileReader();
-            if (event.target.files[0]) {
-                fileReader.readAsText(event.target.files[0], "UTF-8");
-                fileReader.onload = async (e) => {
-                    try {
-                        const imported = JSON.parse(e.target.result);
-                        if (imported && typeof imported === 'object') {
-                            if (imported.categories) { categories = imported.categories; await saveCategoriesToCloud(); }
-                            if (imported.ideas) { for (let item of imported.ideas) { await saveIdeaToCloud(item); } }
-                            if (imported.todos) { for (let item of imported.todos) { await saveTodoToCloud(item); } }
-                        }
-                        switchTab('gateway');
-                        alert("Data and categories successfully imported and synced!");
-                    } catch (err) { alert("Error reading backup file."); }
-                };
-            }
-        }
-
-        function switchTab(tab) {
-            currentTab = tab;
-            ['gateway', 'todos', 'vault', 'generator', 'calendar', 'progress'].forEach(v => {
+        function switchView(viewName) {
+            currentView = viewName;
+            ['mindmap', 'department', 'accountability'].forEach(v => {
                 const el = document.getElementById('view-' + v);
-                if (el) el.style.display = (v === tab) ? 'flex' : 'none';
+                if (el) el.style.display = (v === viewName) ? 'flex' : 'none';
             });
-            ['gateway', 'todos', 'vault', 'calendar', 'progress'].forEach(v => {
-                const btn = document.getElementById('btn-' + v);
+            ['mindmap', 'accountability'].forEach(v => {
+                const btn = document.getElementById('nav-btn-' + v);
                 if (btn) {
-                    btn.className = (v === tab) 
-                        ? "px-3 py-1.5 rounded-lg text-xs font-medium transition bg-emerald-600 text-white shadow-md" 
-                        : "px-3 py-1.5 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white hover:bg-slate-800";
+                    btn.className = (v === viewName)
+                        ? "px-3 py-1.5 rounded-lg text-xs font-medium transition bg-emerald-600 text-white shadow-md flex items-center space-x-1.5"
+                        : "px-3 py-1.5 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-1.5";
                 }
             });
             refreshActiveView();
         }
 
-        function updateCategoryDropdowns() {
-            const todoBizSel = document.getElementById('todoModalBusiness');
-            if (todoBizSel) { todoBizSel.innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join(''); }
-            const calFilter = document.getElementById('calendarBizFilter');
-            if (calFilter) { calFilter.innerHTML = `<option value="All">All Businesses</option>` + categories.map(c => `<option value="${c}">${c}</option>`).join(''); }
-            const vaultFilters = document.getElementById('businessFilters');
-            if (vaultFilters) {
-                vaultFilters.innerHTML = `<button onclick="filterBusiness('All')" class="biz-pill px-3.5 py-1.5 rounded-lg text-xs font-medium transition bg-emerald-600/30 text-emerald-300 border border-emerald-500/50" data-biz="All">All Businesses</button>` +
-                    categories.map(c => `<button onclick="filterBusiness('${c}')" class="biz-pill px-3.5 py-1.5 rounded-lg text-xs font-medium transition bg-slate-900 text-slate-400 border border-slate-800 hover:border-slate-700" data-biz="${c}">${c}</button>`).join('');
-            }
-            const todoFilterContainer = document.getElementById('todoFilterContainer');
-            if (todoFilterContainer) {
-                todoFilterContainer.innerHTML = `<button onclick="setTodoFilter('All')" id="todoFilterAll" class="todo-filter-btn px-3 py-1 rounded-lg text-xs font-medium transition bg-emerald-600 text-white">All Columns</button>` +
-                    categories.map(c => `<button onclick="setTodoFilter('${c}')" id="todoFilter${c.replace(/[^a-zA-Z0-9]/g, '')}" class="todo-filter-btn px-3 py-1 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white">${c}</button>`).join('');
-            }
-            const modalBizCheckboxes = document.getElementById('modalBizCheckboxes');
-            if (modalBizCheckboxes) {
-                modalBizCheckboxes.innerHTML = categories.map(c => `
-                    <label class="flex items-center space-x-2 text-xs text-slate-300 bg-slate-950 p-2 rounded border border-slate-800 cursor-pointer">
-                        <input type="checkbox" name="modalBiz" value="${c}" class="rounded bg-slate-900 border-slate-700 text-emerald-600">
-                        <span>${c}</span>
-                    </label>
-                `).join('');
+        function openDepartment(deptName) {
+            activeDepartment = deptName;
+            document.getElementById('deptTitleHeader').innerText = deptName;
+            switchView('department');
+            setDeptTab('todos');
+        }
+
+        function openCentralHub() {
+            switchView('accountability');
+        }
+
+        function setDeptTab(tabName) {
+            activeDeptTab = tabName;
+            ['todos', 'vault', 'progress'].forEach(t => {
+                const sub = document.getElementById('dept-subview-' + t);
+                const btn = document.getElementById('dept-tab-btn-' + t);
+                if (sub) sub.style.display = (t === tabName) ? 'block' : 'hidden';
+                if (btn) {
+                    btn.className = (t === tabName)
+                        ? "px-4 py-2 rounded-xl text-xs font-semibold transition bg-emerald-600 text-white shadow"
+                        : "px-4 py-2 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-slate-900";
+                }
+            });
+            renderDepartmentSubView();
+        }
+
+        function refreshActiveView() {
+            if (currentView === 'mindmap') {
+                renderMindmapOrbit();
+            } else if (currentView === 'department') {
+                renderDepartmentSubView();
+            } else if (currentView === 'accountability') {
+                renderAccountabilityReport();
             }
         }
 
-        function openCategoryManager() { renderExistingCategoriesList(); document.getElementById('categoryModal').classList.remove('hidden'); }
-        function closeCategoryManager() { document.getElementById('categoryModal').classList.add('hidden'); }
+        function renderMindmapOrbit() {
+            const container = document.getElementById('mindmapOrbitNodes');
+            if (!container) return;
 
-        async function addNewCategory() {
-            const input = document.getElementById('newCategoryInput');
-            const val = input.value.trim();
-            if (val && !categories.includes(val)) {
-                categories.push(val); input.value = '';
-                await saveCategoriesToCloud();
-                updateCategoryDropdowns(); renderExistingCategoriesList(); refreshActiveView();
+            const total = categories.length;
+            const radius = 210; // orbit radius in pixels
+
+            container.innerHTML = categories.map((cat, index) => {
+                const angle = (index / total) * 2 * Math.PI - Math.PI / 2;
+                const x = Math.round(radius * Math.cos(angle));
+                const y = Math.round(radius * Math.sin(angle));
+
+                const deptTodos = todos.filter(t => t.business === cat && !t.archived);
+                const pendingCount = deptTodos.filter(t => !t.completed).length;
+
+                return `
+                    <div onclick="openDepartment('${cat}')" class="mindmap-node absolute cursor-pointer flex flex-col items-center justify-center w-28 h-28 rounded-2xl bg-slate-900/90 border-2 border-emerald-500/40 hover:border-emerald-400 shadow-xl transition transform hover:scale-110 pointer-events-auto p-2 text-center" style="transform: translate(${x}px, ${y}px);">
+                        <span class="text-xs font-bold text-white truncate max-w-full">${cat}</span>
+                        <span class="text-[10px] text-emerald-400 mt-1 bg-emerald-950 px-2 py-0.5 rounded-full border border-emerald-500/30">${pendingCount} tasks</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderDepartmentSubView() {
+            if (activeDeptTab === 'todos') {
+                document.getElementById('dept-subview-todos').style.display = 'block';
+                document.getElementById('dept-subview-vault').style.display = 'none';
+                document.getElementById('dept-subview-progress').style.display = 'none';
+                renderDeptTodos();
+            } else if (activeDeptTab === 'vault') {
+                document.getElementById('dept-subview-todos').style.display = 'none';
+                document.getElementById('dept-subview-vault').style.display = 'block';
+                document.getElementById('dept-subview-progress').style.display = 'none';
+                renderDeptVault();
+            } else if (activeDeptTab === 'progress') {
+                document.getElementById('dept-subview-todos').style.display = 'none';
+                document.getElementById('dept-subview-vault').style.display = 'none';
+                document.getElementById('dept-subview-progress').style.display = 'block';
+                renderDeptProgress();
             }
         }
 
-        async function deleteCategory(cat) {
-            if (categories.length <= 1) { alert("You must keep at least one category."); return; }
-            categories = categories.filter(c => c !== cat);
-            await saveCategoriesToCloud();
-            updateCategoryDropdowns(); renderExistingCategoriesList(); refreshActiveView();
-        }
+        function renderDeptTodos() {
+            const grid = document.getElementById('deptTodosGrid');
+            if (!grid) return;
+            const deptTodos = todos.filter(t => t.business === activeDepartment && !t.archived);
 
-        function renderExistingCategoriesList() {
-            const list = document.getElementById('existingCategoriesList');
-            if (!list) return;
-            list.innerHTML = categories.map(c => `
-                <div class="flex items-center justify-between bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-lg text-xs text-slate-200">
-                    <span>${c}</span>
-                    <button onclick="deleteCategory('${c}')" class="text-rose-400 hover:text-rose-300 ml-3">×</button>
+            if (deptTodos.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-500 text-xs italic">No active tasks in ${activeDepartment}. Click '+ Add Task' to begin.</div>`;
+                return;
+            }
+
+            grid.innerHTML = deptTodos.map(t => `
+                <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-xl space-y-3 flex flex-col justify-between">
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="flex items-start space-x-2.5">
+                            <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTodo('${t.id}')" class="mt-1 h-4 w-4 rounded bg-slate-950 border-slate-700 text-emerald-600 cursor-pointer">
+                            <div>
+                                <h4 class="text-xs font-bold ${t.completed ? 'line-through text-slate-500' : 'text-slate-200'}">${t.title}</h4>
+                                ${t.desc ? `<p class="text-[11px] text-slate-400 mt-1">${t.desc}</p>` : ''}
+                            </div>
+                        </div>
+                        <button onclick="deleteTodo('${t.id}')" class="text-slate-600 hover:text-rose-400 text-xs">×</button>
+                    </div>
+                    <div class="flex items-center justify-between text-[10px] pt-2 border-t border-slate-800">
+                        <span class="px-2 py-0.5 rounded border ${t.priority === 'High' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-slate-800 text-slate-400 border-slate-700'}">${t.priority}</span>
+                        ${t.deadline ? `<span class="text-emerald-400 font-medium">📅 ${formatDeadlineDisplay(t.deadline)}</span>` : '<span class="text-slate-500">No deadline</span>'}
+                    </div>
                 </div>
             `).join('');
         }
 
-        function renderGateway() {
-            const pending = todos.filter(t => !t.completed && !t.archived).length;
-            const activeIdeas = ideas.filter(i => !i.archived).length;
-            const pendingEl = document.getElementById('gatewayPendingCount');
-            const ideaEl = document.getElementById('gatewayIdeaCount');
-            const xpEl = document.getElementById('gatewayXpDisplay');
-            if (pendingEl) pendingEl.innerText = `${pending} pending`;
-            if (ideaEl) ideaEl.innerText = `${activeIdeas} active ideas`;
-            if (xpEl) {
-                const completedCount = todos.filter(t => t.completed || t.archived).length;
-                const xp = completedCount * 25;
-                xpEl.innerText = `${xp} XP Earned`;
+        function renderDeptVault() {
+            const grid = document.getElementById('deptIdeasGrid');
+            if (!grid) return;
+            const deptIdeas = ideas.filter(i => (i.businesses || []).includes(activeDepartment) && !i.archived);
+
+            if (deptIdeas.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-500 text-xs italic">No ideas in ${activeDepartment}. Click '+ Capture Idea' to begin.</div>`;
+                return;
             }
+
+            grid.innerHTML = deptIdeas.map(i => `
+                <div class="bg-slate-900/80 border border-slate-800 p-5 rounded-xl space-y-3 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">${i.status}</span>
+                            <button onclick="deleteIdea('${i.id}')" class="text-slate-600 hover:text-rose-400 text-xs">×</button>
+                        </div>
+                        <h3 class="text-sm font-bold text-white mb-1">${i.title}</h3>
+                        <p class="text-xs text-slate-400 line-clamp-3">${i.notes || 'No notes added...'}</p>
+                    </div>
+                    <div>
+                        ${i.docLink ? `<a href="${i.docLink}" target="_blank" class="text-[11px] text-blue-400 hover:text-blue-300 block mb-2">📄 Open Google Doc Script →</a>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderDeptProgress() {
+            const deptTodos = todos.filter(t => t.business === activeDepartment && !t.archived);
+            const total = deptTodos.length;
+            const completed = deptTodos.filter(t => t.completed).length;
+            const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+            document.getElementById('deptEffText').innerText = `${pct}% Completed (${completed}/${total} Tasks)`;
+            document.getElementById('deptProgressBar').style.width = `${pct}%`;
+        }
+
+        function renderAccountabilityReport() {
+            const box = document.getElementById('accountabilityReportBox');
+            if (!box) return;
+
+            const activeTodos = todos.filter(t => !t.archived);
+            const total = activeTodos.length;
+            const completed = activeTodos.filter(t => t.completed).length;
+            const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+            const overdue = activeTodos.filter(t => !t.completed && t.deadline && new Date(t.deadline) < new Date()).length;
+
+            let deptBreakdownHtml = categories.map(cat => {
+                const cTodos = todos.filter(t => t.business === cat && !t.archived);
+                const cTotal = cTodos.length;
+                const cDone = cTodos.filter(t => t.completed).length;
+                return `• ${cat}: ${cDone}/${cTotal} completed`;
+            }).join('\n');
+
+            const reportText = `========================================
+📊 ANALYTICALL CHEFS - WEEKLY ACCOUNTABILITY REPORT
+========================================
+📅 Generated on: ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+
+🎯 OVERLAPPING EXECUTION METRICS:
+- Total Active Backlog Tasks: ${total}
+- Tasks Completed Successfully: ${completed}
+- Overall Completion Rate: ${completionRate}%
+- Overdue Deadlines Needing Attention: ${overdue}
+
+📂 DEPARTMENTAL BREAKDOWN:
+${deptBreakdownHtml}
+
+💡 ACCOUNTABILITY PLEDGE & REFLECTION:
+"Consistency is compound interest. Every deadline met reinforces the mental architecture required to eliminate brain rot and achieve absolute mastery."
+
+========================================`;
+
+            box.innerText = reportText;
+        }
+
+        function copyAccountabilityReport() {
+            const box = document.getElementById('accountabilityReportBox');
+            if (!box) return;
+            navigator.clipboard.writeText(box.innerText);
+            alert('Weekly accountability report copied to clipboard successfully! Ready to share with your accountability partner.');
         }
 
         function formatDeadlineDisplay(deadlineStr) {
             if (!deadlineStr) return '';
             const dateObj = new Date(deadlineStr);
             if (isNaN(dateObj)) return deadlineStr;
-            const options = { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-            return dateObj.toLocaleDateString('en-US', options);
+            return dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         }
 
-        function getSortedTodos(list) { return [...list].sort((a, b) => (a.completed === b.completed ? 0 : a.completed ? 1 : -1)); }
-
-        function setTodoFilter(filter) {
-            activeTodoFilter = filter;
-            ['All', ...categories].forEach(f => {
-                const cleanId = 'todoFilter' + f.replace(/[^a-zA-Z0-9]/g, '');
-                const btn = document.getElementById(cleanId);
-                if (btn) {
-                    btn.className = (f === filter)
-                        ? "todo-filter-btn px-3 py-1 rounded-lg text-xs font-medium transition bg-emerald-600 text-white"
-                        : "todo-filter-btn px-3 py-1 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white";
-                }
-            });
-
-            const cols = document.querySelectorAll('.todo-col');
-            cols.forEach(col => {
-                const biz = col.getAttribute('data-biz');
-                if (filter === 'All' || biz === filter) { col.style.display = 'block'; }
-                else { col.style.display = 'none'; }
-            });
-
-            const container = document.getElementById('todoColumnsContainer');
-            if (filter === 'All') {
-                container.className = `grid grid-cols-1 md:grid-cols-3 lg:grid-cols-${Math.min(categories.length, 4)} gap-4 flex-1`;
-            } else {
-                container.className = "grid grid-cols-1 max-w-xl mx-auto w-full flex-1";
-            }
-            renderTodos();
-        }
-
-        async function toggleTodayFocus(id) {
-            const task = todos.find(t => t.id === id);
-            if (task) {
-                task.isTodayFocus = !task.isTodayFocus;
-                await saveTodoToCloud(task);
-                if (currentTab === 'progress') { renderProgressTracker(); }
-            }
-        }
-
-        async function toggleArchive(id) {
-            const task = todos.find(t => t.id === id);
-            if (task) {
-                task.archived = !task.archived;
-                if (task.archived) task.isTodayFocus = false;
-                await saveTodoToCloud(task);
-                renderArchiveModal();
-                if (currentTab === 'progress') { renderProgressTracker(); }
-            }
-        }
-
-        function openArchiveModal() {
-            renderArchiveModal();
-            document.getElementById('archiveModal').classList.remove('hidden');
-        }
-        function closeArchiveModal() { document.getElementById('archiveModal').classList.add('hidden'); }
-
-        function renderArchiveModal() {
-            const container = document.getElementById('archiveListContainer');
-            const countBadge = document.getElementById('archiveTotalCount');
-            if (!container || !countBadge) return;
-
-            const archivedTasks = todos.filter(t => t.archived || t.completed);
-            countBadge.innerText = `${archivedTasks.length} archived`;
-
-            if (archivedTasks.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-500 italic py-6 text-center">No completed tasks archived yet.</p>`;
-                return;
-            }
-
-            container.innerHTML = archivedTasks.map(t => `
-                <div class="bg-slate-950 border border-slate-800 p-3.5 rounded-xl space-y-2 flex items-center justify-between">
-                    <div class="space-y-1">
-                        <div class="flex items-center space-x-2">
-                            <span class="text-[9px] bg-emerald-950 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded">${t.business}</span>
-                            <span class="text-[10px] text-slate-400 uppercase">${t.priority} Priority</span>
-                        </div>
-                        <h4 class="text-xs font-semibold text-slate-200 line-through">${t.title}</h4>
-                        ${t.desc ? `<p class="text-[11px] text-slate-400">${t.desc}</p>` : ''}
-                    </div>
-                    <button onclick="toggleArchive('${t.id}')" class="text-xs bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-slate-700 px-3 py-1.5 rounded-lg transition">Restore</button>
-                </div>
-            `).join('');
-        }
-
-        // Idea Archive Functions
-        async function toggleIdeaArchive(id) {
-            const idea = ideas.find(i => i.id === id);
-            if (idea) {
-                idea.archived = !idea.archived;
-                await saveIdeaToCloud(idea);
-                renderIdeaArchiveModal();
-                renderVault();
-            }
-        }
-
-        async function toggleIdeaArchiveFromGenerator() {
-            if (!activeIdeaId) return;
-            const idea = ideas.find(i => i.id === activeIdeaId);
-            if (idea) {
-                idea.archived = !idea.archived;
-                await saveIdeaToCloud(idea);
-                alert(idea.archived ? "Idea archived successfully!" : "Idea restored from archive!");
-                switchTab('vault');
-            }
-        }
-
-        function openIdeaArchiveModal() {
-            renderIdeaArchiveModal();
-            document.getElementById('ideaArchiveModal').classList.remove('hidden');
-        }
-        function closeIdeaArchiveModal() { document.getElementById('ideaArchiveModal').classList.add('hidden'); }
-
-        function renderIdeaArchiveModal() {
-            const container = document.getElementById('ideaArchiveListContainer');
-            const countBadge = document.getElementById('ideaArchiveTotalCount');
-            if (!container || !countBadge) return;
-
-            const archivedIdeas = ideas.filter(i => i.archived);
-            countBadge.innerText = `${archivedIdeas.length} archived`;
-
-            if (archivedIdeas.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-500 italic py-6 text-center">No executed ideas archived yet.</p>`;
-                return;
-            }
-
-            container.innerHTML = archivedIdeas.map(i => `
-                <div class="bg-slate-950 border border-slate-800 p-3.5 rounded-xl space-y-2 flex items-center justify-between">
-                    <div class="space-y-1">
-                        <div class="flex items-center space-x-2">
-                            <span class="text-[9px] bg-emerald-950 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded">${(i.businesses || []).join(', ')}</span>
-                            <span class="text-[10px] text-slate-400 uppercase">${i.status}</span>
-                        </div>
-                        <h4 class="text-xs font-semibold text-slate-200">${i.title}</h4>
-                        ${i.notes ? `<p class="text-[11px] text-slate-400 line-clamp-1">${i.notes}</p>` : ''}
-                    </div>
-                    <button onclick="toggleIdeaArchive('${i.id}')" class="text-xs bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-slate-700 px-3 py-1.5 rounded-lg transition">Restore</button>
-                </div>
-            `).join('');
-        }
-
-        function renderTodaysFocus() {
-            const container = document.getElementById('todaysFocusList');
-            const countBadge = document.getElementById('todayFocusCount');
-            if (!container || !countBadge) return;
-
-            const focusTasks = todos.filter(t => t.isTodayFocus && !t.archived);
-            countBadge.innerText = `${focusTasks.length} targeted`;
-
-            if (focusTasks.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-500 italic py-2 col-span-full">No tasks selected for today yet. Click '⭐ Focus Today' on any task below.</p>`;
-                return;
-            }
-
-            container.innerHTML = focusTasks.map(t => `
-                <div class="bg-slate-950 border border-emerald-500/30 p-3 rounded-xl space-y-2 flex flex-col justify-between">
-                    <div class="flex items-start justify-between gap-2">
-                        <div class="flex items-start space-x-2.5">
-                            <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTodo('${t.id}')" class="mt-1 h-4 w-4 rounded bg-slate-900 border-slate-700 text-emerald-600 cursor-pointer">
-                            <div>
-                                <span class="text-[9px] bg-emerald-950 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded">${t.business}</span>
-                                <h4 class="text-xs font-semibold ${t.completed ? 'line-through text-slate-500' : 'text-white'} mt-1">${t.title}</h4>
-                                ${t.deadline ? `<span class="text-[10px] text-slate-400 block mt-0.5">📅 Due: ${formatDeadlineDisplay(t.deadline)}</span>` : ''}
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-1">
-                            <button onclick="toggleArchive('${t.id}')" class="text-emerald-400 hover:text-emerald-300 text-[10px] px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800" title="Archive Task">📦</button>
-                            <button onclick="toggleTodayFocus('${t.id}')" class="text-amber-400 hover:text-rose-400 text-xs px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800" title="Remove from today">★</button>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function renderTodos() {
-            const containerGrid = document.getElementById('todoColumnsContainer');
-            if (!containerGrid) return;
-
-            containerGrid.innerHTML = categories.map(biz => `
-                <div class="todo-col bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col space-y-3 h-full" data-biz="${biz}" id="col-${biz}" style="${activeTodoFilter !== 'All' && activeTodoFilter !== biz ? 'display:none;' : ''}">
-                    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400">${biz}</h3>
-                        <span id="count${biz.replace(/[^a-zA-Z0-9]/g, '')}" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">0</span>
-                    </div>
-                    <div id="full${biz.replace(/[^a-zA-Z0-9]/g, '')}List" class="space-y-3 overflow-y-auto max-h-[60vh]"></div>
-                </div>
-            `).join('');
-
-            categories.forEach(biz => {
-                const cleanKey = biz.replace(/[^a-zA-Z0-9]/g, '');
-                const listEl = document.getElementById('full' + cleanKey + 'List');
-                const countEl = document.getElementById('count' + cleanKey);
-                if (!listEl || !countEl) return;
-
-                const bizTodos = getSortedTodos(todos.filter(t => t.business === biz && !t.archived));
-                countEl.innerText = bizTodos.length;
-
-                if (bizTodos.length === 0) {
-                    listEl.innerHTML = `<p class="text-xs text-slate-500 italic py-4 text-center">No active tasks</p>`;
-                    return;
-                }
-
-                listEl.innerHTML = bizTodos.map(t => `
-                    <div class="bg-slate-950 border border-slate-800/80 p-3.5 rounded-xl space-y-2">
-                        <div class="flex items-start justify-between gap-2">
-                            <div class="flex items-start space-x-2.5">
-                                <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTodo('${t.id}')" class="mt-1 h-4 w-4 rounded bg-slate-900 border-slate-700 text-emerald-600 cursor-pointer">
-                                <div>
-                                    <h4 class="text-xs font-semibold ${t.completed ? 'line-through text-slate-500' : 'text-slate-200'}">${t.title}</h4>
-                                    ${t.desc ? `<p class="text-[11px] text-slate-400 mt-1 leading-relaxed">${t.desc}</p>` : ''}
-                                </div>
-                            </div>
-                            <div class="flex items-center space-x-1">
-                                <button onclick="toggleArchive('${t.id}')" class="text-slate-400 hover:text-emerald-300 text-xs px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800" title="Archive">📦</button>
-                                <button onclick="toggleTodayFocus('${t.id}')" class="${t.isTodayFocus ? 'text-amber-400 bg-amber-950/40 border-amber-500/30' : 'text-slate-500 bg-slate-900 border-slate-800'} text-[10px] px-1.5 py-0.5 rounded border" title="Focus Today">⭐</button>
-                                <button onclick="openEditTodoModal('${t.id}')" class="text-slate-400 hover:text-emerald-300 text-xs px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800">Edit</button>
-                                <button onclick="deleteTodo('${t.id}')" class="text-rose-400 hover:text-rose-300 text-xs px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800">×</button>
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between text-[10px] pt-2 border-t border-slate-900">
-                            <span class="px-2 py-0.5 rounded border ${t.priority === 'High' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : t.priority === 'Medium' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-slate-800 text-slate-400 border-slate-700'}">${t.priority}</span>
-                            ${t.deadline ? `<span class="text-emerald-400 font-medium">📅 ${formatDeadlineDisplay(t.deadline)}</span>` : '<span class="text-slate-500">No deadline</span>'}
-                        </div>
-                    </div>
-                `).join('');
-            });
-        }
-
-        function openTodoModal() {
-            document.getElementById('editingTodoId').value = '';
-            document.getElementById('todoModalHeaderTitle').innerText = 'Add New Task';
-            document.getElementById('todoModalSubmitBtn').innerText = 'Save Task';
-            document.getElementById('todoModalTitle').value = '';
-            document.getElementById('todoModalDesc').value = '';
-            document.getElementById('todoModalBusiness').value = activeTodoFilter !== 'All' ? activeTodoFilter : categories[0];
-            document.getElementById('todoModalPriority').value = 'Medium';
-            
-            const todayStr = new Date().toISOString().split('T')[0];
-            document.getElementById('todoModalDeadlineDate').value = todayStr;
-            document.getElementById('todoModalDeadlineTime').value = '23:59';
-            
-            document.getElementById('todoModal').classList.remove('hidden');
-        }
-
-        function openEditTodoModal(id) {
-            const task = todos.find(t => t.id === id);
-            if (!task) return;
-            document.getElementById('editingTodoId').value = task.id;
-            document.getElementById('todoModalHeaderTitle').innerText = 'Edit Task';
-            document.getElementById('todoModalSubmitBtn').innerText = 'Update Task';
-            document.getElementById('todoModalTitle').value = task.title || '';
-            document.getElementById('todoModalBusiness').value = task.business || categories[0];
-            document.getElementById('todoModalDesc').value = task.desc || '';
-            document.getElementById('todoModalPriority').value = task.priority || 'Medium';
-
-            if (task.deadline) {
-                const parts = task.deadline.split('T');
-                document.getElementById('todoModalDeadlineDate').value = parts[0] || '';
-                document.getElementById('todoModalDeadlineTime').value = parts[1] || '23:59';
-            } else {
-                document.getElementById('todoModalDeadlineDate').value = '';
-                document.getElementById('todoModalDeadlineTime').value = '23:59';
-            }
-
-            document.getElementById('todoModal').classList.remove('hidden');
-        }
-
+        // Modal Handlers
+        function openTodoModal() { document.getElementById('todoModal').classList.remove('hidden'); }
         function closeTodoModal() { document.getElementById('todoModal').classList.add('hidden'); }
+        function openIdeaModal() { document.getElementById('ideaModal').classList.remove('hidden'); }
+        function closeIdeaModal() { document.getElementById('ideaModal').classList.add('hidden'); }
+        function openCategoryManager() { renderExistingCategoriesList(); document.getElementById('categoryModal').classList.remove('hidden'); }
+        function closeCategoryManager() { document.getElementById('categoryModal').classList.add('hidden'); }
 
         async function saveTodoForm(e) {
             e.preventDefault();
-            const editingId = document.getElementById('editingTodoId').value;
-            const title = document.getElementById('todoModalTitle').value;
-            const business = document.getElementById('todoModalBusiness').value;
-            const desc = document.getElementById('todoModalDesc').value;
+            const title = document.getElementById('todoModalInputTitle').value;
             const priority = document.getElementById('todoModalPriority').value;
-            
-            const dateVal = document.getElementById('todoModalDeadlineDate').value;
-            const timeVal = document.getElementById('todoModalDeadlineTime').value || '23:59';
-            const deadline = dateVal ? `${dateVal}T${timeVal}` : '';
+            const deadline = document.getElementById('todoModalDeadline').value;
+            const desc = document.getElementById('todoModalDesc').value;
 
-            let todoToSave;
-            if (editingId) {
-                const existing = todos.find(t => t.id === editingId);
-                if (existing) { existing.title = title; existing.business = business; existing.desc = desc; existing.priority = priority; existing.deadline = deadline; todoToSave = existing; }
-            } else {
-                todoToSave = { id: Date.now().toString(), title, business, desc, completed: false, priority, deadline, isTodayFocus: false, archived: false };
-            }
-            await saveTodoToCloud(todoToSave);
+            const newTodo = {
+                id: Date.now().toString(),
+                title,
+                business: activeDepartment,
+                priority,
+                deadline,
+                desc,
+                completed: false,
+                archived: false
+            };
+
+            await saveTodoToCloud(newTodo);
+            document.getElementById('todoModalInputTitle').value = '';
+            document.getElementById('todoModalDesc').value = '';
+            document.getElementById('todoModalDeadline').value = '';
             closeTodoModal();
-            if (currentTab === 'progress') { renderProgressTracker(); }
+        }
+
+        async function saveIdeaForm(e) {
+            e.preventDefault();
+            const title = document.getElementById('ideaModalInputTitle').value;
+            const status = document.getElementById('ideaModalStatus').value;
+            const docLink = document.getElementById('ideaModalDocLink').value;
+            const notes = document.getElementById('ideaModalNotes').value;
+
+            const newIdea = {
+                id: Date.now().toString(),
+                title,
+                businesses: [activeDepartment],
+                status,
+                docLink,
+                notes,
+                archived: false
+            };
+
+            await saveIdeaToCloud(newIdea);
+            document.getElementById('ideaModalInputTitle').value = '';
+            document.getElementById('ideaModalDocLink').value = '';
+            document.getElementById('ideaModalNotes').value = '';
+            closeIdeaModal();
         }
 
         async function toggleTodo(id) {
             const item = todos.find(t => t.id === id);
             if (item) {
                 item.completed = !item.completed;
-                if (item.completed) item.archived = true;
                 await saveTodoToCloud(item);
-                
-                if (currentTab === 'todos') {
-                    renderTodaysFocus();
-                    renderTodos();
-                } else if (currentTab === 'progress') {
-                    renderProgressTracker();
-                }
             }
         }
 
-        async function deleteTodo(id) { 
-            await deleteTodoFromCloud(id);
-            if (currentTab === 'progress') { renderProgressTracker(); }
-        }
+        async function deleteTodo(id) { await deleteTodoFromCloud(id); }
+        async function deleteIdea(id) { await deleteIdeaFromCloud(id); }
 
-        function filterBusiness(biz) {
-            activeBusiness = biz;
-            document.querySelectorAll('.biz-pill').forEach(btn => {
-                if (btn.getAttribute('data-biz') === biz) {
-                    btn.className = "biz-pill px-3.5 py-1.5 rounded-lg text-xs font-medium transition bg-emerald-600/30 text-emerald-300 border border-emerald-500/50";
-                } else {
-                    btn.className = "biz-pill px-3.5 py-1.5 rounded-lg text-xs font-medium transition bg-slate-900 text-slate-400 border border-slate-800 hover:border-slate-700";
-                }
-            });
-            renderVault();
-        }
-
-        function renderVault() {
-            const grid = document.getElementById('ideasGrid');
-            if (!grid) return;
-            
-            const filtered = getFilteredIdeas();
-
-            if (filtered.length === 0) {
-                grid.innerHTML = `<div class="col-span-full text-center py-20 bg-slate-900/30 border border-slate-800 rounded-2xl"><h3 class="text-base font-medium text-slate-300">No active ideas found</h3></div>`;
-                return;
+        async function addNewCategory() {
+            const input = document.getElementById('newCategoryInput');
+            const val = input.value.trim();
+            if (val && !categories.includes(val)) {
+                categories.push(val);
+                input.value = '';
+                await saveCategoriesToCloud();
+                renderExistingCategoriesList();
+                renderMindmapOrbit();
             }
+        }
 
-            grid.innerHTML = filtered.map((idea, index) => `
-                <div onclick="selectAndOpenGenerator('${idea.id}')" class="group bg-slate-900/80 border border-slate-800 rounded-xl p-5 hover:border-emerald-500/50 transition cursor-pointer flex flex-col justify-between shadow-sm relative">
-                    <div class="absolute top-3 right-3 flex items-center space-x-1 bg-slate-950/80 border border-slate-800 rounded-lg p-1 z-10" onclick="event.stopPropagation()">
-                        <button onclick="moveIdeaOrder(${index}, -1)" class="text-slate-400 hover:text-white px-1.5 py-0.5 text-xs" title="Move Up">↑</button>
-                        <button onclick="moveIdeaOrder(${index}, 1)" class="text-slate-400 hover:text-white px-1.5 py-0.5 text-xs" title="Move Down">↓</button>
-                    </div>
-                    <div>
-                        <div class="flex items-center justify-between mb-3 pr-16">
-                            <span class="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">${idea.status}</span>
-                            <div class="flex items-center space-x-1">
-                                <button onclick="event.stopPropagation(); toggleIdeaArchive('${idea.id}')" class="text-slate-400 hover:text-amber-400 transition p-1" title="Archive Idea">📦</button>
-                                <button onclick="openEditModalFromGrid(event, '${idea.id}')" class="text-slate-400 hover:text-emerald-300 transition p-1">✏️</button>
-                                <button onclick="deleteIdea(event, '${idea.id}')" class="text-slate-600 hover:text-rose-400 transition p-1">🗑️</button>
-                            </div>
-                        </div>
-                        <h3 class="text-base font-semibold text-white group-hover:text-emerald-300 transition line-clamp-2 mb-2">${idea.title}</h3>
-                        <p class="text-xs text-slate-400 line-clamp-3 mb-4 leading-relaxed">${idea.notes || 'No notes added...'}</p>
-                    </div>
-                    <div>
-                        ${idea.docLink ? `<a href="${idea.docLink}" target="_blank" onclick="event.stopPropagation()" class="text-[11px] text-blue-400 hover:text-blue-300 flex items-center space-x-1 mb-2 truncate"><span>📄 Open Google Doc Script</span></a>` : ''}
-                        <div class="flex flex-wrap gap-1 mb-2">
-                            ${(idea.postTypes || ['Short Form']).map(pt => `<span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded">${pt}</span>`).join('')}
-                            ${(idea.businesses || []).map(b => `<span class="text-[10px] bg-emerald-950/60 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded">${b}</span>`).join('')}
-                        </div>
-                    </div>
+        async function deleteCategory(cat) {
+            if (categories.length <= 1) { alert("You must maintain at least one department node."); return; }
+            categories = categories.filter(c => c !== cat);
+            await saveCategoriesToCloud();
+            renderExistingCategoriesList();
+            renderMindmapOrbit();
+        }
+
+        function renderExistingCategoriesList() {
+            const list = document.getElementById('existingCategoriesList');
+            if (!list) return;
+            list.innerHTML = categories.map(c => `
+                <div class="flex items-center justify-between bg-slate-950 border border-slate-800 px-3 py-2 rounded-xl text-xs text-slate-200">
+                    <span class="font-semibold">${c}</span>
+                    <button onclick="deleteCategory('${c}')" class="text-rose-400 hover:text-rose-300 font-bold px-2 py-0.5">×</button>
                 </div>
             `).join('');
         }
-
-        function selectAndOpenGenerator(id) { activeIdeaId = id; switchTab('generator'); }
-
-        function renderGenerator() {
-            const sidebar = document.getElementById('briefSidebar');
-            const main = document.getElementById('briefMainContent');
-            const archiveBtn = document.getElementById('generatorArchiveBtn');
-            if (!sidebar || !main) return;
-
-            if (ideas.length > 0 && !ideas.some(i => i.id === activeIdeaId)) { activeIdeaId = ideas[0].id; }
-
-            sidebar.innerHTML = `
-                <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400 px-2 mb-2">Select Idea</h2>
-                ${ideas.filter(i => !i.archived).map(i => `
-                    <button onclick="setActiveIdea('${i.id}')" class="w-full text-left px-3.5 py-3 rounded-lg text-sm transition flex flex-col space-y-1 ${activeIdeaId === i.id ? 'bg-emerald-600/20 border border-emerald-500/40 text-white' : 'hover:bg-slate-800 text-slate-300 border border-transparent'}">
-                        <span class="font-medium truncate">${i.title}</span>
-                        <span class="text-[10px] text-slate-400">${(i.businesses || []).join(', ')}</span>
-                    </button>
-                `).join('')}
-            `;
-
-            const current = ideas.find(i => i.id === activeIdeaId);
-            if (!current) { main.innerHTML = `<div class="flex-1 flex items-center justify-center text-slate-500">No ideas available.</div>`; return; }
-
-            if (archiveBtn) {
-                archiveBtn.innerText = current.archived ? "📦 Restore Idea" : "📦 Archive Idea";
-            }
-
-            const postTypes = current.postTypes || ['Short Form'];
-            
-            let specificGuidelines = '';
-            if (postTypes.includes('Short Form')) {
-                specificGuidelines += `- **Short Form Guidelines:** Maximum duration constraint is 45 seconds. Hook must be delivered within the first 3 seconds.\n`;
-            }
-            if (postTypes.includes('Long Form')) {
-                specificGuidelines += `- **Long Form Guidelines:** Video length should be at least 7-8 minutes depending on the depth of the topic. Incorporate multiple engagement hooks throughout the structure.\n`;
-            }
-            if (postTypes.includes('Static')) {
-                specificGuidelines += `- **Static / Carousel Guidelines:** Generate a structured carousel or image layout plan. Before generating the final visual asset, explicitly list clarifying questions if any details are missing.\n`;
-            }
-
-            const promptText = `Act as an expert content creator and strategist for Analyticall Chefs. Create a highly engaging content production package for the following concept:
-Title: ${current.title}
-Business Domain: ${(current.businesses || []).join(', ')}
-Post Type(s): ${postTypes.join(', ')}
-Raw Notes & Context: ${current.notes || 'None provided'}
-
-Specific Post Type Guidelines:
-${specificGuidelines}
-General Rules:
-- Focus strictly on practical skills, career building, and student thriving (do not mention admissions or consultancy terms until Phase 4).`;
-
-            main.innerHTML = `
-                <div class="space-y-6">
-                    <div class="flex items-center justify-between border-b border-slate-800 pb-4">
-                        <div>
-                            <div class="flex gap-1 mb-1 flex-wrap">
-                                ${postTypes.map(pt => `<span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded">${pt}</span>`).join('')}
-                                ${(current.businesses || []).map(b => `<span class="text-[10px] bg-emerald-950/60 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded">${b}</span>`).join('')}
-                            </div>
-                            <h2 class="text-2xl font-bold text-white">${current.title}</h2>
-                        </div>
-                        <select onchange="updateStatus(this.value)" class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1 text-xs text-emerald-400 font-semibold focus:outline-none">
-                            <option value="Idea" ${current.status === 'Idea' ? 'selected' : ''}>Idea</option>
-                            <option value="Scripting" ${current.status === 'Scripting' ? 'selected' : ''}>Scripting</option>
-                            <option value="Shooting" ${current.status === 'Shooting' ? 'selected' : ''}>Shooting</option>
-                            <option value="Editing" ${current.status === 'Editing' ? 'selected' : ''}>Editing</option>
-                            <option value="Published" ${current.status === 'Published' ? 'selected' : ''}>Published</option>
-                        </select>
-                    </div>
-                    ${current.docLink ? `
-                        <div class="bg-blue-950/30 border border-blue-500/30 rounded-xl p-3.5 flex items-center justify-between">
-                            <span class="text-xs text-blue-300 font-medium truncate">Google Doc Script Link Attached</span>
-                            <a href="${current.docLink}" target="_blank" class="px-3 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs transition">Open Doc →</a>
-                        </div>
-                    ` : ''}
-                    <div>
-                        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Raw Notes & Thoughts</h3>
-                        <div class="bg-slate-950 border border-slate-800 rounded-lg p-4 text-sm text-slate-300 whitespace-pre-wrap">${current.notes || 'No notes.'}</div>
-                    </div>
-                    <div class="space-y-2">
-                        <div class="flex items-center justify-between">
-                            <h3 class="text-xs font-semibold uppercase tracking-wider text-emerald-400">🤖 Context-Aware Gemini Prompt</h3>
-                            <button onclick="navigator.clipboard.writeText(document.getElementById('promptBox').innerText); alert('Prompt copied to clipboard!');" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1 rounded transition">Copy Prompt</button>
-                        </div>
-                        <div id="promptBox" class="bg-slate-950 border border-emerald-500/30 rounded-xl p-4 text-xs font-mono text-slate-300 whitespace-pre-wrap leading-relaxed">${promptText}</div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function setActiveIdea(id) { activeIdeaId = id; switchTab('generator'); }
-        async function updateStatus(newStatus) {
-            const current = ideas.find(i => i.id === activeIdeaId);
-            if (current) { current.status = newStatus; await saveIdeaToCloud(current); }
-        }
-
-        function renderCalendar() {
-            const tbody = document.getElementById('calendarTableBody');
-            const bizFilter = document.getElementById('calendarBizFilter').value;
-            if (!tbody) return;
-
-            let rows = [];
-            ideas.forEach(i => {
-                if (i.archived) return;
-                const types = (i.postTypes && i.postTypes.length > 0) ? i.postTypes : ['Short Form'];
-                const businesses = (i.businesses && i.businesses.length > 0) ? i.businesses : ['General'];
-                types.forEach(pt => {
-                    businesses.forEach(biz => {
-                        rows.push({ id: i.id, title: i.title, business: biz, postType: pt, status: i.status || 'Idea', scheduleTime: i.scheduleTime || '' });
-                    });
-                });
-            });
-
-            if (bizFilter !== 'All') rows = rows.filter(r => r.business === bizFilter);
-
-            if (rows.length === 0) { tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-500">No scheduled content.</td></tr>`; return; }
-
-            tbody.innerHTML = rows.map(r => `
-                <tr class="hover:bg-slate-900/50 transition">
-                    <td class="p-4 font-medium text-white">${r.title}</td>
-                    <td class="p-4"><span class="text-[10px] bg-emerald-950/60 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded">${r.business}</span></td>
-                    <td class="p-4"><span class="text-xs bg-slate-800 px-2.5 py-1 rounded text-slate-300">${r.postType}</span></td>
-                    <td class="p-4"><span class="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-500/20">${r.status}</span></td>
-                    <td class="p-4 text-xs text-slate-400">${r.scheduleTime ? r.scheduleTime.replace('T', ' ') : 'Not scheduled'}</td>
-                    <td class="p-4 text-right">
-                        <button onclick="deleteIdea(event, '${r.id}')" class="text-rose-400 hover:text-rose-300 text-xs font-medium">Delete</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function renderProgressTracker() {
-            const focusTasks = todos.filter(t => t.isTodayFocus && !t.archived);
-            const focusTotal = focusTasks.length;
-            const focusDone = focusTasks.filter(t => t.completed).length;
-            const dailyPct = focusTotal > 0 ? Math.round((focusDone / focusTotal) * 100) : 0;
-
-            const dailyEffText = document.getElementById('dailyEfficiencyText');
-            const dailyProgBar = document.getElementById('dailyProgressBar');
-            const dailyCompText = document.getElementById('dailyCompletedCountText');
-            const dailyRemText = document.getElementById('dailyRemainingCountText');
-
-            if (dailyEffText) dailyEffText.innerText = `${dailyPct}% Completed (${focusDone}/${focusTotal})`;
-            if (dailyProgBar) dailyProgBar.style.width = `${dailyPct}%`;
-            if (dailyCompText) dailyCompText.innerText = `${focusDone} completed today`;
-            if (dailyRemText) dailyRemText.innerText = `${focusTotal - focusDone} remaining today`;
-
-            const activeBacklog = todos.filter(t => !t.archived);
-            const totalTasks = activeBacklog.length;
-            const completedTasks = activeBacklog.filter(t => t.completed).length;
-            const pct = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-            const xp = completedTasks * 25;
-            const level = Math.floor(xp / 100) + 1;
-
-            const lvlBadge = document.getElementById('playerLevelBadge');
-            const xpText = document.getElementById('playerXpText');
-            const overallPctText = document.getElementById('overallPercentageText');
-            const overallProgBar = document.getElementById('overallProgressBar');
-
-            if (lvlBadge) lvlBadge.innerText = `Level ${level} ${level > 2 ? 'Master Builder' : 'Prodigy'}`;
-            if (xpText) xpText.innerText = `${xp} Total XP Earned (${completedTasks} Tasks Completed)`;
-            if (overallPctText) overallPctText.innerText = `${pct}% Complete (${completedTasks}/${totalTasks} Backlog)`;
-            if (overallProgBar) overallProgBar.style.width = `${pct}%`;
-
-            const domainGrid = document.getElementById('domainStatsGrid');
-            if (domainGrid) {
-                domainGrid.innerHTML = categories.map(cat => {
-                    const catTodos = todos.filter(t => t.business === cat && !t.archived);
-                    const catTotal = catTodos.length;
-                    const catDone = catTodos.filter(t => t.completed).length;
-                    const catPct = catTotal > 0 ? Math.round((catDone / catTotal) * 100) : 0;
-                    
-                    return `
-                        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col space-y-3">
-                            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-                                <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider">${cat}</h4>
-                                <span class="text-[10px] text-slate-400">${catDone}/${catTotal} Done</span>
-                            </div>
-                            <div class="space-y-1">
-                                <div class="flex justify-between text-[11px] text-slate-300">
-                                    <span>Efficiency</span>
-                                    <span class="font-bold">${catPct}%</span>
-                                </div>
-                                <div class="w-full bg-slate-950 rounded-full h-2 border border-slate-800 overflow-hidden">
-                                    <div class="bg-emerald-500 h-full transition-all duration-300" style="width: ${catPct}%"></div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            }
-            
-            generateReport();
-        }
-
-        function generateReport() {
-            const reportContainer = document.getElementById('analyticalReportContent');
-            if (!reportContainer) return;
-
-            if (todos.length === 0 && ideas.length === 0) {
-                reportContainer.innerHTML = `<p class="italic text-slate-500">No data available yet. Add tasks and ideas to generate actionable insights.</p>`;
-                return;
-            }
-
-            const focusTasks = todos.filter(t => t.isTodayFocus && !t.archived);
-            const focusTotal = focusTasks.length;
-            const focusDone = focusTasks.filter(t => t.completed).length;
-            
-            let bestCat = categories[0];
-            let maxDone = -1;
-            categories.forEach(cat => {
-                const done = todos.filter(t => t.business === cat && t.completed && !t.archived).length;
-                if (done > maxDone) { maxDone = done; bestCat = cat; }
-            });
-
-            let workloadVerdict = "Balanced workload sizing.";
-            if (focusTotal > 0 && focusDone === focusTotal) {
-                workloadVerdict = "🔥 You completed 100% of your daily focus! Consider slightly increasing your daily target tomorrow to challenge yourself.";
-            } else if (focusTotal > 0 && focusDone === 0) {
-                workloadVerdict = "⚠️ 0% completion on today's focus. Watch out for brain rot loops—pick one small task right now to build momentum.";
-            } else if (focusTotal === 0) {
-                workloadVerdict = "📌 You haven't starred any tasks for today's focus yet. Select a few tasks using the ⭐ button in the To-Do Hub!";
-            }
-
-            const activeBacklogCount = todos.filter(t => !t.archived).length;
-
-            reportContainer.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                        <div class="text-slate-400 text-[10px] uppercase">Today's Focus Done</div>
-                        <div class="text-lg font-bold text-emerald-400">${focusDone} / ${focusTotal}</div>
-                    </div>
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                        <div class="text-slate-400 text-[10px] uppercase">Top Performing Domain</div>
-                        <div class="text-lg font-bold text-indigo-400">${bestCat}</div>
-                    </div>
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                        <div class="text-slate-400 text-[10px] uppercase">Active Backlog</div>
-                        <div class="text-lg font-bold text-purple-400">${activeBacklogCount} Tasks</div>
-                    </div>
-                </div>
-                <p class="text-slate-300">💡 <strong>Anti-Rot Diagnostic:</strong> ${workloadVerdict}</p>
-            `;
-        }
-
-        function openModal() {
-            document.getElementById('editingId').value = '';
-            document.getElementById('modalHeaderTitle').innerText = 'Capture & Schedule Content';
-            document.getElementById('modalSubmitBtn').innerText = 'Save & Schedule';
-            document.getElementById('modalTitle').value = '';
-            document.getElementById('modalDocLink').value = '';
-            document.getElementById('modalNotes').value = '';
-            document.getElementById('modalYoutubeUrls').value = '';
-            document.getElementById('modalScheduleTime').value = '';
-            document.querySelectorAll('input[name="modalBiz"]').forEach(cb => cb.checked = false);
-            document.querySelectorAll('input[name="modalPostType"]').forEach(cb => cb.checked = false);
-            document.getElementById('ideaModal').classList.remove('hidden');
-        }
-
-        function openEditModal(id) {
-            const current = ideas.find(i => i.id === id);
-            if (!current) return;
-            document.getElementById('editingId').value = current.id;
-            document.getElementById('modalHeaderTitle').innerText = 'Edit Idea & Schedule';
-            document.getElementById('modalSubmitBtn').innerText = 'Update Content';
-            document.getElementById('modalTitle').value = current.title || '';
-            document.getElementById('modalStatus').value = current.status || 'Idea';
-            document.getElementById('modalScheduleTime').value = current.scheduleTime || '';
-            document.getElementById('modalDocLink').value = current.docLink || '';
-            document.getElementById('modalNotes').value = current.notes || '';
-            document.getElementById('modalYoutubeUrls').value = (current.youtubeUrls || []).join(', ');
-            document.querySelectorAll('input[name="modalBiz"]').forEach(cb => cb.checked = (current.businesses || []).includes(cb.value));
-            document.querySelectorAll('input[name="modalPostType"]').forEach(cb => cb.checked = (current.postTypes || []).includes(cb.value));
-            document.getElementById('ideaModal').classList.remove('hidden');
-        }
-
-        function openEditModalFromGrid(e, id) { e.stopPropagation(); openEditModal(id); }
-        function closeModal() { document.getElementById('ideaModal').classList.add('hidden'); }
-
-        async function saveIdeaForm(e) {
-            e.preventDefault();
-            const editingId = document.getElementById('editingId').value;
-            const title = document.getElementById('modalTitle').value;
-            const status = document.getElementById('modalStatus').value;
-            const scheduleTime = document.getElementById('modalScheduleTime').value;
-            const docLink = document.getElementById('modalDocLink').value;
-            const notes = document.getElementById('modalNotes').value;
-            const rawUrls = document.getElementById('modalYoutubeUrls').value;
-            
-            const selectedBiz = [];
-            document.querySelectorAll('input[name="modalBiz"]:checked').forEach(cb => selectedBiz.push(cb.value));
-            const selectedPostTypes = [];
-            document.querySelectorAll('input[name="modalPostType"]:checked').forEach(cb => selectedPostTypes.push(cb.value));
-            const youtubeUrls = rawUrls ? rawUrls.split(/[\n,]+/).map(u => u.trim()).filter(u => u.length > 0) : [];
-
-            let entryToSave;
-            if (editingId) {
-                const existing = ideas.find(i => i.id === editingId);
-                if (existing) {
-                    existing.title = title; existing.businesses = selectedBiz; existing.postTypes = selectedPostTypes.length > 0 ? selectedPostTypes : ['Short Form']; existing.status = status; existing.scheduleTime = scheduleTime; existing.docLink = docLink; existing.notes = notes; existing.youtubeUrls = youtubeUrls;
-                    entryToSave = existing;
-                }
-            } else {
-                const newOrder = ideas.length;
-                entryToSave = { id: Date.now().toString(), title, businesses: selectedBiz, postTypes: selectedPostTypes.length > 0 ? selectedPostTypes : ['Short Form'], status, scheduleTime, docLink, notes, youtubeUrls, scripts: [], order: newOrder, archived: false };
-                activeIdeaId = entryToSave.id;
-            }
-            await saveIdeaToCloud(entryToSave);
-            closeModal();
-        }
-
-        async function deleteIdea(e, id) { e.stopPropagation(); await deleteIdeaFromCloud(id); }
     </script>
 </body>
 </html>
