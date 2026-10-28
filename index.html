@@ -57,7 +57,7 @@
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col selection:bg-emerald-500 selection:text-white">
 
     <!-- Top Navigation Bar -->
-    <header class="border-b border-slate-800/80 bg-slate-900/80 backdrop-blur sticky top-0 z-40 px-6 py-3.5 flex items-center justify-between">
+    <header class="border-b border-slate-800/80 bg-slate-900/80 backdrop-blur sticky top-0 z-40 px-6 py-3.5 flex items-center justify-between flex-wrap gap-y-2">
         <div class="flex items-center space-x-3 cursor-pointer" onclick="switchView('mindmap')">
             <div class="h-9 w-11 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center px-1 shadow-lg shadow-emerald-500/10">
                 <div class="flex items-end space-x-0.5 h-5">
@@ -79,8 +79,11 @@
             <button onclick="switchView('mindmap')" id="nav-btn-mindmap" class="px-3 py-1.5 rounded-lg text-xs font-medium transition bg-emerald-600 text-white shadow-md flex items-center space-x-1.5">
                 <span>🌌 Mindmap Launcher</span>
             </button>
+            <button onclick="switchView('masterTodos')" id="nav-btn-masterTodos" class="px-3 py-1.5 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-1.5">
+                <span>📋 All Pending Tasks</span>
+            </button>
             <button onclick="switchView('accountability')" id="nav-btn-accountability" class="px-3 py-1.5 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-1.5">
-                <span>📊 Weekly Accountability Report</span>
+                <span>📊 Weekly Report</span>
             </button>
             <button onclick="openCategoryManager()" class="bg-slate-800/80 hover:bg-slate-800 text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1">
                 <span>⚙️ Departments</span>
@@ -104,7 +107,7 @@
             <!-- Mindmap Orbit Layout Container -->
             <div class="relative w-full max-w-4xl h-[460px] flex items-center justify-center z-10">
                 <!-- Central Hub Bubble -->
-                <div onclick="openCentralHub()" class="mindmap-node group absolute z-20 cursor-pointer flex flex-col items-center justify-center w-36 h-36 rounded-full bg-gradient-to-br from-emerald-600 via-emerald-700 to-slate-900 border-4 border-emerald-400/60 shadow-2xl shadow-emerald-600/40 transition transform hover:scale-105">
+                <div onclick="switchView('accountability')" class="mindmap-node group absolute z-20 cursor-pointer flex flex-col items-center justify-center w-36 h-36 rounded-full bg-gradient-to-br from-emerald-600 via-emerald-700 to-slate-900 border-4 border-emerald-400/60 shadow-2xl shadow-emerald-600/40 transition transform hover:scale-105">
                     <span class="text-2xl mb-1">👑</span>
                     <h3 class="text-[11px] font-black tracking-wider text-white text-center px-2">ANALYTICALL CHEFS</h3>
                     <span class="text-[9px] text-emerald-200 mt-0.5">Core Hub</span>
@@ -182,19 +185,43 @@
             </div>
         </div>
 
-        <!-- ================= VIEW 3: WEEKLY ACCOUNTABILITY REPORT ================= -->
-        <div id="view-accountability" class="hidden flex-1 flex flex-col p-6 max-w-4xl mx-auto w-full space-y-6">
-            <div class="flex items-center justify-between bg-slate-900/80 border border-slate-800 p-5 rounded-2xl shadow-lg">
+        <!-- ================= VIEW 3: MASTER PENDING TASKS DASHBOARD ================= -->
+        <div id="view-masterTodos" class="hidden flex-1 flex flex-col p-6 max-w-7xl mx-auto w-full space-y-6">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4 bg-slate-900/80 border border-slate-800 p-5 rounded-2xl shadow-lg">
+                <div>
+                    <span class="text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-0.5 rounded uppercase">Global Dashboard</span>
+                    <h2 class="text-2xl font-black text-white mt-0.5">📋 All Pending Tasks Across Departments</h2>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <input type="text" id="masterSearchInput" oninput="renderMasterTodos()" placeholder="Search tasks across departments..." class="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 w-64">
+                    <button onclick="openTodoModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-xl text-xs font-medium transition shadow">+ Add Task</button>
+                </div>
+            </div>
+
+            <div id="masterTodosGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </div>
+
+        <!-- ================= VIEW 4: WEEKLY ACCOUNTABILITY REPORT (MON-SUN) ================= -->
+        <div id="view-accountability" class="hidden flex-1 flex flex-col p-6 max-w-5xl mx-auto w-full space-y-6">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4 bg-slate-900/80 border border-slate-800 p-5 rounded-2xl shadow-lg">
                 <div class="flex items-center space-x-3">
                     <button onclick="switchView('mindmap')" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 px-3.5 py-2 rounded-xl text-xs font-semibold transition">← Back</button>
                     <div>
-                        <h2 class="text-xl font-bold text-white">📊 Weekly Accountability Report</h2>
-                        <p class="text-xs text-slate-400">Review your weekly execution, deadlines met, and copy the summary for your accountability partner.</p>
+                        <h2 class="text-xl font-bold text-white">📊 Weekly Accountability Report (Monday - Sunday)</h2>
+                        <p class="text-xs text-slate-400">Day-by-day 7-day execution report for your accountability partner.</p>
                     </div>
                 </div>
-                <button onclick="copyAccountabilityReport()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-xs font-medium transition shadow-lg shadow-indigo-600/30 flex items-center space-x-1.5">
-                    <span>📋 Copy Report for Partner</span>
-                </button>
+                <div class="flex items-center space-x-2 flex-wrap gap-y-1">
+                    <button onclick="copyAccountabilityReport()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-2 rounded-xl text-xs font-medium transition shadow flex items-center space-x-1.5">
+                        <span>📋 Copy Report</span>
+                    </button>
+                    <button onclick="shareOnWhatsApp()" class="bg-emerald-700 hover:bg-emerald-600 text-white px-3.5 py-2 rounded-xl text-xs font-medium transition shadow flex items-center space-x-1.5">
+                        <span>💬 Share WhatsApp</span>
+                    </button>
+                    <button onclick="shareViaEmail()" class="bg-blue-700 hover:bg-blue-600 text-white px-3.5 py-2 rounded-xl text-xs font-medium transition shadow flex items-center space-x-1.5">
+                        <span>✉️ Share Email</span>
+                    </button>
+                </div>
             </div>
 
             <div id="accountabilityReportBox" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 space-y-6 text-sm leading-relaxed text-slate-200 shadow-xl font-mono"></div>
@@ -211,7 +238,7 @@
                 </h2>
                 <span class="text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded-full font-semibold">Priority Alert</span>
             </div>
-            <p class="text-xs text-slate-300">You have pending high-priority tasks with upcoming deadlines that require your immediate attention to prevent procrastination loops:</p>
+            <p class="text-xs text-slate-300">You have pending high-priority tasks with upcoming deadlines that require your immediate attention:</p>
             <div id="urgentTaskListContainer" class="space-y-2.5 max-h-[45vh] overflow-y-auto pr-1"></div>
             <div class="flex justify-end pt-3 border-t border-slate-800">
                 <button onclick="closeUrgentPushModal()" class="px-4 py-2 rounded-lg text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white transition shadow">Got it, Let's Execute Now →</button>
@@ -250,7 +277,7 @@
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Deadline Date & Time (For Accountability)</label>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Deadline Date & Time (For 7-Day Accountability)</label>
                     <input type="datetime-local" id="todoModalDeadline" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none">
                 </div>
                 <div>
@@ -327,7 +354,7 @@
         let ideas = [];
         let todos = [];
         let categories = ['Abroad', 'Skills', 'Faculty', 'Virtual CFO', 'General'];
-        let currentView = 'mindmap'; // 'mindmap', 'department', 'accountability'
+        let currentView = 'mindmap'; // 'mindmap', 'department', 'masterTodos', 'accountability'
         let activeDepartment = 'Skills';
         let activeDeptTab = 'todos'; // 'todos', 'vault', 'progress'
         let hasCheckedUrgentTasks = false;
@@ -341,7 +368,16 @@
 
             window.onSnapshot(window.colTodos, (snapshot) => {
                 todos = [];
-                snapshot.forEach((docSnap) => { todos.push({ id: docSnap.id, ...docSnap.data() }); });
+                snapshot.forEach((docSnap) => { 
+                    const data = docSnap.data();
+                    // Auto-archive completed tasks from previous days
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    if (data.completed && data.completedDate && data.completedDate !== todayStr && !data.archived) {
+                        data.archived = true;
+                        window.setDoc(docSnap.ref, data);
+                    }
+                    todos.push({ id: docSnap.id, ...data }); 
+                });
                 refreshActiveView();
 
                 // Check urgent tasks for push alert popup on startup
@@ -394,11 +430,11 @@
 
         function switchView(viewName) {
             currentView = viewName;
-            ['mindmap', 'department', 'accountability'].forEach(v => {
+            ['mindmap', 'department', 'masterTodos', 'accountability'].forEach(v => {
                 const el = document.getElementById('view-' + v);
                 if (el) el.style.display = (v === viewName) ? 'flex' : 'none';
             });
-            ['mindmap', 'accountability'].forEach(v => {
+            ['mindmap', 'masterTodos', 'accountability'].forEach(v => {
                 const btn = document.getElementById('nav-btn-' + v);
                 if (btn) {
                     btn.className = (v === viewName)
@@ -414,10 +450,6 @@
             document.getElementById('deptTitleHeader').innerText = deptName;
             switchView('department');
             setDeptTab('todos');
-        }
-
-        function openCentralHub() {
-            switchView('accountability');
         }
 
         function setDeptTab(tabName) {
@@ -440,6 +472,8 @@
                 renderMindmapOrbit();
             } else if (currentView === 'department') {
                 renderDepartmentSubView();
+            } else if (currentView === 'masterTodos') {
+                renderMasterTodos();
             } else if (currentView === 'accountability') {
                 renderAccountabilityReport();
             }
@@ -525,6 +559,42 @@
             }).join('');
         }
 
+        function renderMasterTodos() {
+            const grid = document.getElementById('masterTodosGrid');
+            if (!grid) return;
+            const searchInput = document.getElementById('masterSearchInput');
+            const query = searchInput ? searchInput.value.toLowerCase() : '';
+            
+            const pendingTasks = todos.filter(t => !t.archived && !t.completed && (t.title.toLowerCase().includes(query) || t.business.toLowerCase().includes(query)));
+
+            if (pendingTasks.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-16 text-center text-slate-500 text-xs italic">No pending tasks found across departments. You are fully caught up!</div>`;
+                return;
+            }
+
+            grid.innerHTML = pendingTasks.map(t => `
+                <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-xl space-y-2.5 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[9px] bg-emerald-950 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded font-semibold">${t.business}</span>
+                            <span class="text-[9px] text-slate-400">${t.typeSlot || 'General'}</span>
+                        </div>
+                        <div class="flex items-start space-x-2.5">
+                            <input type="checkbox" onchange="toggleTodo('${t.id}')" class="mt-0.5 h-4 w-4 rounded bg-slate-900 border-slate-700 text-emerald-600 cursor-pointer">
+                            <div>
+                                <h4 class="text-xs font-bold text-white">${t.title}</h4>
+                                ${t.desc ? `<p class="text-[10px] text-slate-400 mt-1">${t.desc}</p>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between text-[9px] pt-2 border-t border-slate-800">
+                        <span class="px-1.5 py-0.5 rounded border ${t.priority === 'High' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-slate-800 text-slate-400 border-slate-700'}">${t.priority}</span>
+                        ${t.deadline ? `<span class="text-emerald-400">📅 ${formatDeadlineDisplay(t.deadline)}</span>` : '<span class="text-slate-500">No deadline</span>'}
+                    </div>
+                </div>
+            `).join('');
+        }
+
         function openTodoModalWithSlot(slot) {
             document.getElementById('editingTodoId').value = '';
             document.getElementById('todoModalTitle').innerText = 'Add Task (3-3-3 Rule)';
@@ -591,36 +661,77 @@
             const box = document.getElementById('accountabilityReportBox');
             if (!box) return;
 
-            const activeTodos = todos.filter(t => !t.archived);
-            const total = activeTodos.length;
-            const completed = activeTodos.filter(t => t.completed).length;
-            const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+            // Compute Monday to Sunday dates for the current week
+            const now = new Date();
+            const dayOfWeek = now.getDay(); // 0 is Sunday, 1 is Monday...
+            const diffToMonday = (dayOfWeek === 0 ? -6 : 1) - dayOfWeek;
+            const monday = new Date(now);
+            monday.setDate(now.getDate() + diffToMonday);
+            monday.setHours(0,0,0,0);
 
-            const overdue = activeTodos.filter(t => !t.completed && t.deadline && new Date(t.deadline) < new Date()).length;
+            const daysOfWeekNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            const weekDatesMap = {};
 
-            let deptBreakdownHtml = categories.map(cat => {
-                const cTodos = todos.filter(t => t.business === cat && !t.archived);
-                const cTotal = cTodos.length;
-                const cDone = cTodos.filter(t => t.completed).length;
-                return `• ${cat}: ${cDone}/${cTotal} completed`;
-            }).join('\n');
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(monday);
+                d.setDate(monday.getDate() + i);
+                const dateKey = d.toISOString().split('T')[0];
+                weekDatesMap[dateKey] = { name: daysOfWeekNames[i], dateStr: dateKey, tasks: [] };
+            }
+
+            // Categorize tasks into their respective days (based on deadline, or createdAt/timestamp)
+            todos.forEach(t => {
+                let targetDate = '';
+                if (t.deadline) {
+                    targetDate = t.deadline.split('T')[0];
+                } else if (t.createdAt) {
+                    targetDate = t.createdAt.split('T')[0];
+                } else {
+                    targetDate = new Date().toISOString().split('T')[0];
+                }
+
+                if (weekDatesMap[targetDate]) {
+                    weekDatesMap[targetDate].tasks.push(t);
+                }
+            });
+
+            let dayWiseReportHtml = '';
+            let totalWeekTasks = 0;
+            let totalWeekCompleted = 0;
+
+            Object.values(weekDatesMap).forEach(dayObj => {
+                const count = dayObj.tasks.length;
+                const done = dayObj.tasks.filter(t => t.completed).length;
+                totalWeekTasks += count;
+                totalWeekCompleted += done;
+
+                dayWiseReportHtml += `\n📅 ${dayObj.name} (${dayObj.dateStr}):\n`;
+                if (count === 0) {
+                    dayWiseReportHtml += `   - No tasks scheduled.\n`;
+                } else {
+                    dayObj.tasks.forEach(t => {
+                        const statusIcon = t.completed ? '✅' : '⏳';
+                        dayWiseReportHtml += `   ${statusIcon} [${t.business}] ${t.title} (${t.typeSlot || 'General'})\n`;
+                    });
+                }
+            });
+
+            const overallRate = totalWeekTasks > 0 ? Math.round((totalWeekCompleted / totalWeekTasks) * 100) : 0;
 
             const reportText = `========================================
 📊 ANALYTICALL CHEFS - WEEKLY ACCOUNTABILITY REPORT
 ========================================
-📅 Generated on: ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+🗓️ Week Range: ${Object.keys(weekDatesMap)[0]} to ${Object.keys(weekDatesMap)[6]}
 
-🎯 OVERLAPPING EXECUTION METRICS:
-- Total Active Backlog Tasks: ${total}
-- Tasks Completed Successfully: ${completed}
-- Overall Completion Rate: ${completionRate}%
-- Overdue Deadlines Needing Attention: ${overdue}
+🎯 7-DAY EXECUTION SUMMARY:
+- Total Scheduled Tasks: ${totalWeekTasks}
+- Completed & Verified: ${totalWeekCompleted}
+- Overall Week Completion Rate: ${overallRate}%
 
-📂 DEPARTMENTAL BREAKDOWN:
-${deptBreakdownHtml}
-
-💡 ACCOUNTABILITY PLEDGE & REFLECTION:
-"Consistency is compound interest. Every deadline met reinforces the mental architecture required to eliminate brain rot and achieve absolute mastery."
+📋 DAY-BY-DAY BREAKDOWN (MONDAY - SUNDAY):
+${dayWiseReportHtml}
+💡 ACCOUNTABILITY PARTNER PLEDGE:
+"Consistency compounds. Executing daily tasks builds unstoppable momentum and eliminates procrastination loops."
 
 ========================================`;
 
@@ -632,6 +743,21 @@ ${deptBreakdownHtml}
             if (!box) return;
             navigator.clipboard.writeText(box.innerText);
             alert('Weekly accountability report copied to clipboard successfully! Ready to share with your accountability partner.');
+        }
+
+        function shareOnWhatsApp() {
+            const box = document.getElementById('accountabilityReportBox');
+            if (!box) return;
+            const text = encodeURIComponent(box.innerText);
+            window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+        }
+
+        function shareViaEmail() {
+            const box = document.getElementById('accountabilityReportBox');
+            if (!box) return;
+            const subject = encodeURIComponent("Analyticall Chefs - Weekly Accountability Report");
+            const body = encodeURIComponent(box.innerText);
+            window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
         }
 
         function formatDeadlineDisplay(deadlineStr) {
@@ -686,7 +812,9 @@ ${deptBreakdownHtml}
                     deadline,
                     desc,
                     completed: false,
-                    archived: false
+                    completedDate: '',
+                    archived: false,
+                    createdAt: new Date().toISOString()
                 };
             }
 
@@ -719,6 +847,7 @@ ${deptBreakdownHtml}
             const item = todos.find(t => t.id === id);
             if (item) {
                 item.completed = !item.completed;
+                item.completedDate = item.completed ? new Date().toISOString().split('T')[0] : '';
                 await saveTodoToCloud(item);
             }
         }
