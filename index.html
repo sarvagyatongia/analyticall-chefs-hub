@@ -82,6 +82,9 @@
             <button onclick="switchView('masterTodos')" id="nav-btn-masterTodos" class="px-3 py-1.5 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-1.5">
                 <span>📋 All Pending Tasks</span>
             </button>
+            <button onclick="switchView('archive')" id="nav-btn-archive" class="px-3 py-1.5 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-1.5">
+                <span>📦 Archive</span>
+            </button>
             <button onclick="switchView('accountability')" id="nav-btn-accountability" class="px-3 py-1.5 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-1.5">
                 <span>📊 Weekly Report</span>
             </button>
@@ -214,6 +217,21 @@
             </div>
 
             <div id="masterTodosGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </div>
+
+        <!-- ================= VIEW 5: ARCHIVED TASKS DASHBOARD ================= -->
+        <div id="view-archive" class="hidden flex-1 flex flex-col p-6 max-w-7xl mx-auto w-full space-y-6">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4 bg-slate-900/80 border border-slate-800 p-5 rounded-2xl shadow-lg">
+                <div>
+                    <span class="text-[10px] font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2.5 py-0.5 rounded uppercase">History & Records</span>
+                    <h2 class="text-2xl font-black text-white mt-0.5">📦 Archived Completed Tasks</h2>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <input type="text" id="archiveSearchInput" oninput="renderArchiveView()" placeholder="Search archived tasks..." class="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-slate-200 focus:outline-none focus:border-purple-500 w-64">
+                </div>
+            </div>
+
+            <div id="archiveTasksGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </div>
 
         <!-- ================= VIEW 4: WEEKLY ACCOUNTABILITY REPORT (MON-SUN) ================= -->
@@ -387,10 +405,14 @@
 
                 snapshot.forEach((docSnap) => { 
                     const data = docSnap.data();
-                    // Auto-archive completed tasks instantly
+                    
+                    // Auto-archive completed tasks ONLY if they were completed on a previous day
                     if (data.completed && !data.archived) {
-                        data.archived = true;
-                        window.setDoc(docSnap.ref, data);
+                        const compDate = data.completedDate || todayStr;
+                        if (compDate < todayStr) {
+                            data.archived = true;
+                            window.setDoc(docSnap.ref, data);
+                        }
                     }
                     todos.push({ id: docSnap.id, ...data }); 
                 });
@@ -446,11 +468,11 @@
 
         function switchView(viewName) {
             currentView = viewName;
-            ['mindmap', 'department', 'masterTodos', 'accountability'].forEach(v => {
+            ['mindmap', 'department', 'masterTodos', 'archive', 'accountability'].forEach(v => {
                 const el = document.getElementById('view-' + v);
                 if (el) el.style.display = (v === viewName) ? 'flex' : 'none';
             });
-            ['mindmap', 'masterTodos', 'accountability'].forEach(v => {
+            ['mindmap', 'masterTodos', 'archive', 'accountability'].forEach(v => {
                 const btn = document.getElementById('nav-btn-' + v);
                 if (btn) {
                     btn.className = (v === viewName)
@@ -490,6 +512,8 @@
                 renderDepartmentSubView();
             } else if (currentView === 'masterTodos') {
                 renderMasterTodos();
+            } else if (currentView === 'archive') {
+                renderArchiveView();
             } else if (currentView === 'accountability') {
                 renderAccountabilityReport();
             }
@@ -671,264 +695,50 @@
             `).join('');
         }
 
-        function openTodoModalWithSlot(slot) {
-            document.getElementById('editingTodoId').value = '';
-            document.getElementById('todoModalTitle').innerText = 'Add Task (3-3-3 Rule)';
-            document.getElementById('todoModalSubmitBtn').innerText = 'Save Task';
-            document.getElementById('todoModalInputTitle').value = '';
-            document.getElementById('todoModalDesc').value = '';
-            document.getElementById('todoModalDeadline').value = '';
-            document.getElementById('todoModalTypeSlot').value = slot;
-            openTodoModal();
-        }
-
-        function openEditTodoModal(id) {
-            const task = todos.find(t => t.id === id);
-            if (!task) return;
-            document.getElementById('editingTodoId').value = task.id;
-            document.getElementById('todoModalTitle').innerText = 'Edit Task';
-            document.getElementById('todoModalSubmitBtn').innerText = 'Update Task';
-            document.getElementById('todoModalInputTitle').value = task.title || '';
-            document.getElementById('todoModalTypeSlot').value = task.typeSlot || '3 Hours Deep Work';
-            document.getElementById('todoModalPriority').value = task.priority || 'Medium';
-            document.getElementById('todoModalDeadline').value = task.deadline || '';
-            document.getElementById('todoModalDesc').value = task.desc || '';
-            openTodoModal();
-        }
-
-        function renderDeptVault() {
-            const grid = document.getElementById('deptIdeasGrid');
+        function renderArchiveView() {
+            const grid = document.getElementById('archiveTasksGrid');
             if (!grid) return;
-            const deptIdeas = ideas.filter(i => (i.businesses || []).includes(activeDepartment) && !i.archived);
+            const searchInput = document.getElementById('archiveSearchInput');
+            const query = searchInput ? searchInput.value.toLowerCase() : '';
 
-            if (deptIdeas.length === 0) {
-                grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-500 text-xs italic">No ideas in ${activeDepartment}. Click '+ Capture Idea & Google Doc' to begin.</div>`;
+            const archivedTasks = todos.filter(t => t.archived && (t.title.toLowerCase().includes(query) || t.business.toLowerCase().includes(query)));
+
+            if (archivedTasks.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-16 text-center text-slate-500 text-xs italic">No archived tasks found. Completed tasks automatically archive on the following day.</div>`;
                 return;
             }
 
-            grid.innerHTML = deptIdeas.map(i => `
-                <div class="bg-slate-900/80 border border-slate-800 p-5 rounded-xl space-y-3 flex flex-col justify-between">
+            grid.innerHTML = archivedTasks.map(t => `
+                <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-xl space-y-2.5 flex flex-col justify-between">
                     <div>
                         <div class="flex items-center justify-between mb-2">
-                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">${i.status}</span>
-                            <button onclick="deleteIdea('${i.id}')" class="text-slate-600 hover:text-rose-400 text-xs">×</button>
+                            <span class="text-[9px] bg-purple-950 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded font-semibold">${t.business}</span>
+                            <button onclick="restoreTodo('${t.id}')" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-emerald-400 px-2 py-0.5 rounded transition">Restore Task</button>
                         </div>
-                        <h3 class="text-sm font-bold text-white mb-1">${i.title}</h3>
-                        <p class="text-xs text-slate-400 line-clamp-3">${i.notes || 'No notes added...'}</p>
+                        <div class="flex items-start space-x-2.5">
+                            <span class="text-emerald-400 text-sm">✅</span>
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-300 line-through">${t.title}</h4>
+                                ${t.desc ? `<p class="text-[10px] text-slate-400 mt-1">${t.desc}</p>` : ''}
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        ${i.docLink ? `<a href="${i.docLink}" target="_blank" class="text-[11px] text-blue-400 hover:text-blue-300 block mb-2 font-medium">📄 Open Google Doc Script →</a>` : '<span class="text-[10px] text-slate-500 italic block mb-2">No Google Doc linked</span>'}
+                    <div class="flex items-center justify-between text-[9px] pt-2 border-t border-slate-800 text-slate-400">
+                        <span>Completed on: ${t.completedDate || 'Previous Day'}</span>
+                        <button onclick="deleteTodo('${t.id}')" class="text-rose-400 hover:text-rose-300">Delete Permanently</button>
                     </div>
                 </div>
             `).join('');
         }
 
-        function renderDeptProgress() {
-            const deptTodos = todos.filter(t => t.business === activeDepartment && !t.archived);
-            const total = deptTodos.length;
-            const completed = deptTodos.filter(t => t.completed).length;
-            const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
-
-            document.getElementById('deptEffText').innerText = `${pct}% Completed (${completed}/${total} Tasks)`;
-            document.getElementById('deptProgressBar').style.width = `${pct}%`;
-        }
-
-        function renderAccountabilityReport() {
-            const box = document.getElementById('accountabilityReportBox');
-            if (!box) return;
-
-            // Compute Monday to Sunday dates for the current week
-            const now = new Date();
-            const dayOfWeek = now.getDay(); // 0 is Sunday, 1 is Monday...
-            const diffToMonday = (dayOfWeek === 0 ? -6 : 1) - dayOfWeek;
-            const monday = new Date(now);
-            monday.setDate(now.getDate() + diffToMonday);
-            monday.setHours(0,0,0,0);
-
-            const daysOfWeekNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-            const weekDatesMap = {};
-
-            for (let i = 0; i < 7; i++) {
-                const d = new Date(monday);
-                d.setDate(monday.getDate() + i);
-                const dateKey = d.toISOString().split('T')[0];
-                weekDatesMap[dateKey] = { name: daysOfWeekNames[i], dateStr: dateKey, tasks: [] };
-            }
-
-            // Categorize tasks into their respective days (based on deadline, or createdAt/timestamp)
-            todos.forEach(t => {
-                let targetDate = '';
-                if (t.deadline) {
-                    targetDate = t.deadline.split('T')[0];
-                } else if (t.createdAt) {
-                    targetDate = t.createdAt.split('T')[0];
-                } else {
-                    targetDate = new Date().toISOString().split('T')[0];
-                }
-
-                if (weekDatesMap[targetDate]) {
-                    weekDatesMap[targetDate].tasks.push(t);
-                }
-            });
-
-            let dayWiseReportHtml = '';
-            let totalWeekTasks = 0;
-            let totalWeekCompleted = 0;
-
-            Object.values(weekDatesMap).forEach(dayObj => {
-                const count = dayObj.tasks.length;
-                const done = dayObj.tasks.filter(t => t.completed).length;
-                totalWeekTasks += count;
-                totalWeekCompleted += done;
-
-                dayWiseReportHtml += `\n📅 ${dayObj.name} (${dayObj.dateStr}):\n`;
-                if (count === 0) {
-                    dayWiseReportHtml += `   - No tasks scheduled.\n`;
-                } else {
-                    dayObj.tasks.forEach(t => {
-                        const statusIcon = t.completed ? '✅' : '⏳';
-                        dayWiseReportHtml += `   ${statusIcon} [${t.business}] ${t.title} (${t.typeSlot || 'General'})\n`;
-                    });
-                }
-            });
-
-            const overallRate = totalWeekTasks > 0 ? Math.round((totalWeekCompleted / totalWeekTasks) * 100) : 0;
-
-            const reportText = `========================================
-📊 ANALYTICALL CHEFS - WEEKLY ACCOUNTABILITY REPORT
-========================================
-🗓️ Week Range: ${Object.keys(weekDatesMap)[0]} to ${Object.keys(weekDatesMap)[6]}
-
-🎯 7-DAY EXECUTION SUMMARY:
-- Total Scheduled Tasks: ${totalWeekTasks}
-- Completed & Verified: ${totalWeekCompleted}
-- Overall Week Completion Rate: ${overallRate}%
-
-📋 DAY-BY-DAY BREAKDOWN (MONDAY - SUNDAY):
-${dayWiseReportHtml}
-💡 ACCOUNTABILITY PARTNER PLEDGE:
-"Consistency compounds. Executing daily tasks builds unstoppable momentum and eliminates procrastination loops."
-
-========================================`;
-
-            box.innerText = reportText;
-        }
-
-        function copyAccountabilityReport() {
-            const box = document.getElementById('accountabilityReportBox');
-            if (!box) return;
-            navigator.clipboard.writeText(box.innerText);
-            alert('Weekly accountability report copied to clipboard successfully! Ready to share with your accountability partner.');
-        }
-
-        function shareOnWhatsApp() {
-            const box = document.getElementById('accountabilityReportBox');
-            if (!box) return;
-            const text = encodeURIComponent(box.innerText);
-            window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
-        }
-
-        function shareViaEmail() {
-            const box = document.getElementById('accountabilityReportBox');
-            if (!box) return;
-            const subject = encodeURIComponent("Analyticall Chefs - Weekly Accountability Report");
-            const body = encodeURIComponent(box.innerText);
-            window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
-        }
-
-        function formatDeadlineDisplay(deadlineStr) {
-            if (!deadlineStr) return '';
-            const dateObj = new Date(deadlineStr);
-            if (isNaN(dateObj)) return deadlineStr;
-            return dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-        }
-
-        // Modal Handlers
-        function openTodoModal() { document.getElementById('todoModal').classList.remove('hidden'); }
-        function closeTodoModal() { document.getElementById('todoModal').classList.add('hidden'); }
-        function openIdeaModal() { 
-            document.getElementById('editingIdeaId').value = '';
-            document.getElementById('ideaModalTitle').innerText = 'Capture Idea & Google Doc';
-            document.getElementById('ideaModalInputTitle').value = '';
-            document.getElementById('ideaModalDocLink').value = '';
-            document.getElementById('ideaModalNotes').value = '';
-            document.getElementById('ideaModal').classList.remove('hidden'); 
-        }
-        function closeIdeaModal() { document.getElementById('ideaModal').classList.add('hidden'); }
-        function openCategoryManager() { renderExistingCategoriesList(); document.getElementById('categoryModal').classList.remove('hidden'); }
-        function closeCategoryManager() { document.getElementById('categoryModal').classList.add('hidden'); }
-
-        async function saveTodoForm(e) {
-            e.preventDefault();
-            const editingId = document.getElementById('editingTodoId').value;
-            const title = document.getElementById('todoModalInputTitle').value;
-            const typeSlot = document.getElementById('todoModalTypeSlot').value;
-            const priority = document.getElementById('todoModalPriority').value;
-            const deadline = document.getElementById('todoModalDeadline').value;
-            const desc = document.getElementById('todoModalDesc').value;
-
-            let todoToSave;
-            if (editingId) {
-                const existing = todos.find(t => t.id === editingId);
-                if (existing) {
-                    existing.title = title;
-                    existing.typeSlot = typeSlot;
-                    existing.priority = priority;
-                    existing.deadline = deadline;
-                    existing.desc = desc;
-                    todoToSave = existing;
-                }
-            } else {
-                todoToSave = {
-                    id: Date.now().toString(),
-                    title,
-                    business: activeDepartment,
-                    typeSlot,
-                    priority,
-                    deadline,
-                    desc,
-                    completed: false,
-                    completedDate: '',
-                    archived: false,
-                    createdAt: new Date().toISOString()
-                };
-            }
-
-            await saveTodoToCloud(todoToSave);
-            closeTodoModal();
-        }
-
-        async function saveIdeaForm(e) {
-            e.preventDefault();
-            const title = document.getElementById('ideaModalInputTitle').value;
-            const status = document.getElementById('ideaModalStatus').value;
-            const docLink = document.getElementById('ideaModalDocLink').value;
-            const notes = document.getElementById('ideaModalNotes').value;
-
-            const newIdea = {
-                id: Date.now().toString(),
-                title,
-                businesses: [activeDepartment],
-                status,
-                docLink,
-                notes,
-                archived: false
-            };
-
-            await saveIdeaToCloud(newIdea);
-            closeIdeaModal();
-        }
-
-        async function toggleTodo(id) {
+        async function restoreTodo(id) {
             const item = todos.find(t => t.id === id);
             if (item) {
-                item.completed = !item.completed;
-                item.completedDate = item.completed ? new Date().toISOString().split('T')[0] : '';
-                // Instantly auto-archive completed tasks so the active list stays clutter-free
-                if (item.completed) {
-                    item.archived = true;
-                }
+                item.archived = false;
+                item.completed = false;
+                item.completedDate = '';
                 await saveTodoToCloud(item);
+                refreshActiveView();
             }
         }
 
@@ -937,13 +747,13 @@ ${dayWiseReportHtml}
 
         async function addNewCategory() {
             const input = document.getElementById('newCategoryInput');
-            const val = input.value.trim();
-            if (val && !categories.includes(val)) {
-                categories.push(val);
-                input.value = '';
-                await saveCategoriesToCloud();
-                renderExistingCategoriesList();
-                renderMindmapOrbit();
+        async function toggleTodo(id) {
+            const item = todos.find(t => t.id === id);
+            if (item) {
+                item.completed = !item.completed;
+                item.completedDate = item.completed ? new Date().toISOString().split('T')[0] : '';
+                // Note: completed tasks remain visible today and auto-archive on future days
+                await saveTodoToCloud(item);
             }
         }
 
