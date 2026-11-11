@@ -27,6 +27,7 @@
         window.db = db;
         window.colIdeas = collection(db, "ideas");
         window.colTodos = collection(db, "todos");
+        window.colCrms = collection(db, "crmLeads");
         window.colMeta = collection(db, "metadata");
         window.setDoc = setDoc;
         window.doc = doc;
@@ -34,7 +35,9 @@
         window.onSnapshot = onSnapshot;
         window.getDocs = getDocs;
 
-        window.initFirebaseSync();
+        if (window.initFirebaseSync) {
+            window.initFirebaseSync();
+        }
     </script>
     <style>
         @keyframes floatPulse {
@@ -81,6 +84,9 @@
             </button>
             <button onclick="switchView('masterTodos')" id="nav-btn-masterTodos" class="px-3 py-1.5 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-1.5">
                 <span>📋 All Pending Tasks</span>
+            </button>
+            <button onclick="switchView('crm')" id="nav-btn-crm" class="px-3 py-1.5 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-1.5">
+                <span>🤝 CRM Pipelines</span>
             </button>
             <button onclick="switchView('archive')" id="nav-btn-archive" class="px-3 py-1.5 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-1.5">
                 <span>📦 Archive</span>
@@ -159,7 +165,6 @@
 
             <!-- Dept Sub-View 1: 3-3-3 Tasks (Today) -->
             <div id="dept-subview-todos" class="space-y-6 flex-1">
-                <!-- 3-3-3 Rule Banner Explanation -->
                 <div class="bg-gradient-to-r from-emerald-950/40 via-slate-900 to-indigo-950/40 border border-emerald-500/30 rounded-2xl p-4 text-xs text-slate-300 flex flex-col md:flex-row items-center justify-between gap-4">
                     <div>
                         <span class="font-bold text-emerald-400 uppercase tracking-wider block mb-1">⚡ Today's 3-3-3 Active Execution Queue</span>
@@ -207,16 +212,42 @@
         <div id="view-masterTodos" class="hidden flex-1 flex flex-col p-6 max-w-7xl mx-auto w-full space-y-6">
             <div class="flex flex-col md:flex-row items-center justify-between gap-4 bg-slate-900/80 border border-slate-800 p-5 rounded-2xl shadow-lg">
                 <div>
-                    <span class="text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-0.5 rounded uppercase">Global Dashboard</span>
+                    <span class="text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-0.5 rounded uppercase">Global View</span>
                     <h2 class="text-2xl font-black text-white mt-0.5">📋 All Pending Tasks Across Departments</h2>
                 </div>
                 <div class="flex items-center space-x-3">
-                    <input type="text" id="masterSearchInput" oninput="renderMasterTodos()" placeholder="Search tasks across departments..." class="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 w-64">
-                    <button onclick="openTodoModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-xl text-xs font-medium transition shadow">+ Add Task</button>
+                    <input type="text" id="masterSearchInput" oninput="renderMasterTodos()" placeholder="Search tasks..." class="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 w-64">
+                </div>
+            </div>
+            <div id="masterTodosGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </div>
+
+        <!-- ================= VIEW 4: CRM PIPELINES DASHBOARD ================= -->
+        <div id="view-crm" class="hidden flex-1 flex flex-col p-6 max-w-7xl mx-auto w-full space-y-6">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4 bg-slate-900/80 border border-slate-800 p-5 rounded-2xl shadow-lg">
+                <div>
+                    <span class="text-[10px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-0.5 rounded uppercase">HubSpot Style CRM</span>
+                    <h2 class="text-2xl font-black text-white mt-0.5">🤝 Lead & Client Management Pipelines</h2>
+                </div>
+                <div class="flex items-center space-x-2 flex-wrap gap-y-2">
+                    <button onclick="setCrmTab('skills')" id="crm-tab-skills" class="px-4 py-2 rounded-xl text-xs font-semibold transition bg-blue-600 text-white shadow">Business Analytics Skills</button>
+                    <button onclick="setCrmTab('abroad')" id="crm-tab-abroad" class="px-4 py-2 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-slate-900">Abroad Education</button>
+                    <button onclick="exportCrmLeadsCsv()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3.5 py-2 rounded-xl text-xs font-medium transition shadow flex items-center space-x-1.5">
+                        <span>📥 Export Leads CSV</span>
+                    </button>
+                    <button onclick="openCrmLeadModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-xl text-xs font-medium transition shadow ml-1">+ Add New Lead</button>
                 </div>
             </div>
 
-            <div id="masterTodosGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            <!-- Skills CRM Pipeline View -->
+            <div id="crm-subview-skills" class="space-y-4 flex-1">
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4 overflow-x-auto pb-4" id="skillsCrmColumns"></div>
+            </div>
+
+            <!-- Abroad Education CRM Pipeline View -->
+            <div id="crm-subview-abroad" class="hidden space-y-4 flex-1">
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4 overflow-x-auto pb-4" id="abroadCrmColumns"></div>
+            </div>
         </div>
 
         <!-- ================= VIEW 5: ARCHIVED TASKS DASHBOARD ================= -->
@@ -234,7 +265,7 @@
             <div id="archiveTasksGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </div>
 
-        <!-- ================= VIEW 4: WEEKLY ACCOUNTABILITY REPORT (MON-SUN) ================= -->
+        <!-- ================= VIEW 6: WEEKLY ACCOUNTABILITY REPORT (MON-SUN) ================= -->
         <div id="view-accountability" class="hidden flex-1 flex flex-col p-6 max-w-5xl mx-auto w-full space-y-6">
             <div class="flex flex-col md:flex-row items-center justify-between gap-4 bg-slate-900/80 border border-slate-800 p-5 rounded-2xl shadow-lg">
                 <div class="flex items-center space-x-3">
@@ -280,6 +311,95 @@
     </div>
 
     <!-- ================= MODALS ================= -->
+
+    <!-- Modal for CRM Lead Add/Edit -->
+    <div id="crmModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <h2 id="crmModalTitle" class="text-lg font-bold text-white">Add New Lead / Inquiry</h2>
+            <form onsubmit="saveCrmLeadForm(event)" class="space-y-4">
+                <input type="hidden" id="editingLeadId" value="">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Pipeline Domain</label>
+                        <select id="leadPipeline" onchange="updateStageDropdown()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none">
+                            <option value="skills">Business Analytics Skills</option>
+                            <option value="abroad">Abroad Education Consultancy</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Pipeline Stage</label>
+                        <select id="leadStage" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none"></select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Full Name</label>
+                        <input type="text" id="leadName" required placeholder="e.g., Alex Johnson" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Contact Details</label>
+                        <input type="text" id="leadContact" required placeholder="+91 9876543210" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Lead Temperature</label>
+                        <select id="leadTemperature" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none">
+                            <option value="Warm">Warm Lead</option>
+                            <option value="Hot">🔥 Hot Lead</option>
+                            <option value="Cold">❄️ Cold Lead</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Inquiry Date</label>
+                        <input type="date" id="leadInquiryDate" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Source</label>
+                        <input type="text" id="leadSource" placeholder="e.g., Instagram, Referral" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Preferred Time</label>
+                        <input type="text" id="leadPreferredTime" placeholder="e.g., Evening 6 PM" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none">
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Interaction Type</label>
+                        <select id="leadInteractionType" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none">
+                            <option value="Over Call">Over Call</option>
+                            <option value="Office Visit">Office Visit</option>
+                            <option value="Online Chat">Online Chat</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Payment Status</label>
+                        <select id="leadPaymentStatus" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none">
+                            <option value="Pending">Payment Pending</option>
+                            <option value="Invoice Generated">Invoice Generated</option>
+                            <option value="Paid / Received">Paid / Received</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Next Follow-up Date</label>
+                        <input type="date" id="leadFollowUpDate" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Basic Info & Rapport Notes</label>
+                    <textarea id="leadBasicInfo" rows="2" placeholder="Background, goals, pain points..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none resize-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Further Actionable Notes</label>
+                    <textarea id="leadNotes" rows="2" placeholder="Internal remarks..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none resize-none"></textarea>
+                </div>
+                <div class="flex justify-end space-x-3 pt-3 border-t border-slate-800">
+                    <button type="button" onclick="closeCrmLeadModal()" class="px-4 py-2 rounded-lg text-xs text-slate-400 hover:text-white">Cancel</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium shadow">Save Lead</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Modal for Task Add/Edit with 3-3-3 Category -->
     <div id="todoModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
@@ -386,13 +506,38 @@
     <script>
         let ideas = [];
         let todos = [];
+        let crmLeads = [];
         let categories = ['Abroad', 'Skills', 'Faculty', 'Virtual CFO', 'General'];
-        let currentView = 'mindmap'; // 'mindmap', 'department', 'masterTodos', 'archive', 'accountability'
+        let currentView = 'mindmap'; // 'mindmap', 'department', 'masterTodos', 'crm', 'archive', 'accountability'
         let activeDepartment = 'Skills';
         let activeDeptTab = 'todos'; // 'todos', 'futureTodos', 'vault', 'progress'
+        let activeCrmTab = 'skills'; // 'skills', 'abroad'
         let hasCheckedUrgentTasks = false;
 
+        const skillsStages = [
+            { id: 'inquiry', name: 'Inquiry Received' },
+            { id: 'consultation', name: 'Initial Consultation / Call' },
+            { id: 'proposal', name: 'Proposal / Invoice Sent' },
+            { id: 'won', name: 'Lead Won / Paid' },
+            { id: 'lost', name: 'Lead Lost' }
+        ];
+
+        const abroadStages = [
+            { id: 'inquiry', name: 'Inquiry Received' },
+            { id: 'consultation', name: 'Initial Consultation' },
+            { id: 'assessment', name: 'Profile Assessment' },
+            { id: 'shortlisting', name: 'University Shortlisting' },
+            { id: 'application', name: 'Application Submission' },
+            { id: 'offer', name: 'Offer Received' },
+            { id: 'visa', name: 'Visa Processing' },
+            { id: 'departure', name: 'Pre Departure Training' },
+            { id: 'closed', name: 'Lead Closed / Won' },
+            { id: 'lost', name: 'Lead Lost' }
+        ];
+
         window.initFirebaseSync = function() {
+            if (!window.colIdeas || !window.colTodos || !window.colCrms || !window.colMeta) return;
+
             window.onSnapshot(window.colIdeas, (snapshot) => {
                 ideas = [];
                 snapshot.forEach((docSnap) => { ideas.push({ id: docSnap.id, ...docSnap.data() }); });
@@ -405,8 +550,6 @@
 
                 snapshot.forEach((docSnap) => { 
                     const data = docSnap.data();
-                    
-                    // Auto-archive completed tasks ONLY if they were completed on a previous day
                     if (data.completed && !data.archived) {
                         const compDate = data.completedDate || todayStr;
                         if (compDate < todayStr) {
@@ -418,11 +561,16 @@
                 });
                 refreshActiveView();
 
-                // Check urgent tasks for push alert popup on startup
                 if (!hasCheckedUrgentTasks) {
                     hasCheckedUrgentTasks = true;
                     checkUrgentTasksAlert();
                 }
+            });
+
+            window.onSnapshot(window.colCrms, (snapshot) => {
+                crmLeads = [];
+                snapshot.forEach((docSnap) => { crmLeads.push({ id: docSnap.id, ...docSnap.data() }); });
+                refreshActiveView();
             });
 
             window.onSnapshot(window.doc(window.db, "metadata", "config"), (docSnap) => {
@@ -465,14 +613,16 @@
         async function deleteIdeaFromCloud(id) { await window.deleteDoc(window.doc(window.db, "ideas", id)); }
         async function saveTodoToCloud(todo) { await window.setDoc(window.doc(window.db, "todos", todo.id), todo); }
         async function deleteTodoFromCloud(id) { await window.deleteDoc(window.doc(window.db, "todos", id)); }
+        async function saveCrmLeadToCloud(lead) { await window.setDoc(window.doc(window.db, "crmLeads", lead.id), lead); }
+        async function deleteCrmLeadFromCloud(id) { await window.deleteDoc(window.doc(window.db, "crmLeads", id)); }
 
         function switchView(viewName) {
             currentView = viewName;
-            ['mindmap', 'department', 'masterTodos', 'archive', 'accountability'].forEach(v => {
+            ['mindmap', 'department', 'masterTodos', 'crm', 'archive', 'accountability'].forEach(v => {
                 const el = document.getElementById('view-' + v);
                 if (el) el.style.display = (v === viewName) ? 'flex' : 'none';
             });
-            ['mindmap', 'masterTodos', 'archive', 'accountability'].forEach(v => {
+            ['mindmap', 'masterTodos', 'crm', 'archive', 'accountability'].forEach(v => {
                 const btn = document.getElementById('nav-btn-' + v);
                 if (btn) {
                     btn.className = (v === viewName)
@@ -485,7 +635,8 @@
 
         function openDepartment(deptName) {
             activeDepartment = deptName;
-            document.getElementById('deptTitleHeader').innerText = deptName;
+            const header = document.getElementById('deptTitleHeader');
+            if (header) header.innerText = deptName + " Department";
             switchView('department');
             setDeptTab('todos');
         }
@@ -505,6 +656,21 @@
             renderDepartmentSubView();
         }
 
+        function setCrmTab(tabName) {
+            activeCrmTab = tabName;
+            ['skills', 'abroad'].forEach(t => {
+                const sub = document.getElementById('crm-subview-' + t);
+                const btn = document.getElementById('crm-tab-' + t);
+                if (sub) sub.style.display = (t === tabName) ? 'block' : 'none';
+                if (btn) {
+                    btn.className = (t === tabName)
+                        ? "px-4 py-2 rounded-xl text-xs font-semibold transition bg-blue-600 text-white shadow"
+                        : "px-4 py-2 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-slate-900";
+                }
+            });
+            renderCrmPipelines();
+        }
+
         function refreshActiveView() {
             if (currentView === 'mindmap') {
                 renderMindmapOrbit();
@@ -512,6 +678,8 @@
                 renderDepartmentSubView();
             } else if (currentView === 'masterTodos') {
                 renderMasterTodos();
+            } else if (currentView === 'crm') {
+                renderCrmPipelines();
             } else if (currentView === 'archive') {
                 renderArchiveView();
             } else if (currentView === 'accountability') {
@@ -777,73 +945,257 @@
             `).join('');
         }
 
-        async function restoreTodo(id) {
-            const item = todos.find(t => t.id === id);
-            if (item) {
-                item.archived = false;
-                item.completed = false;
-                item.completedDate = '';
-                await saveTodoToCloud(item);
-                refreshActiveView();
-            }
+        function renderCrmPipelines() {
+            const skillsGrid = document.getElementById('skillsCrmColumns');
+            const abroadGrid = document.getElementById('abroadCrmColumns');
+            if (!skillsGrid || !abroadGrid) return;
+
+            skillsGrid.innerHTML = skillsStages.map(stage => {
+                const stageLeads = crmLeads.filter(l => l.pipeline === 'skills' && l.stage === stage.id);
+                return `
+                    <div class="bg-slate-900/80 border border-slate-800 p-3 rounded-xl flex flex-col space-y-3 min-w-[220px]">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                            <h4 class="text-xs font-bold text-blue-400">${stage.name}</h4>
+                            <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">${stageLeads.length}</span>
+                        </div>
+                        <div class="space-y-2.5 min-h-[300px]">
+                            ${stageLeads.length === 0 ? `<p class="text-[10px] text-slate-500 italic text-center py-4">No leads</p>` : stageLeads.map(l => renderLeadCard(l)).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            abroadGrid.innerHTML = abroadStages.map(stage => {
+                const stageLeads = crmLeads.filter(l => l.pipeline === 'abroad' && l.stage === stage.id);
+                return `
+                    <div class="bg-slate-900/80 border border-slate-800 p-3 rounded-xl flex flex-col space-y-3 min-w-[220px]">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                            <h4 class="text-xs font-bold text-indigo-400">${stage.name}</h4>
+                            <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">${stageLeads.length}</span>
+                        </div>
+                        <div class="space-y-2.5 min-h-[300px]">
+                            ${stageLeads.length === 0 ? `<p class="text-[10px] text-slate-500 italic text-center py-4">No leads</p>` : stageLeads.map(l => renderLeadCard(l)).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
-        async function toggleTodo(id) {
-            const item = todos.find(t => t.id === id);
-            if (item) {
-                item.completed = !item.completed;
-                item.completedDate = item.completed ? new Date().toISOString().split('T')[0] : '';
-                await saveTodoToCloud(item);
-                refreshActiveView();
-            }
-        }
+        function renderLeadCard(l) {
+            const temp = l.temperature || 'Warm';
+            const tempColor = temp === 'Hot' ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' : temp === 'Cold' ? 'bg-sky-500/20 text-sky-300 border-sky-500/40' : 'bg-amber-500/20 text-amber-300 border-amber-500/40';
+            const tempEmoji = temp === 'Hot' ? '🔥 Hot' : temp === 'Cold' ? '❄️ Cold' : '☀️ Warm';
 
-        async function deleteTodo(id) { await deleteTodoFromCloud(id); }
-        async function deleteIdea(id) { await deleteIdeaFromCloud(id); }
-
-        async function addNewCategory() {
-            const input = document.getElementById('newCategoryInput');
-            const val = input.value.trim();
-            if (val && !categories.includes(val)) {
-                categories.push(val);
-                input.value = '';
-                await saveCategoriesToCloud();
-                renderExistingCategoriesList();
-                renderMindmapOrbit();
-            }
-        }
-
-        async function deleteCategory(cat) {
-            if (categories.length <= 1) { alert("You must maintain at least one department node."); return; }
-            categories = categories.filter(c => c !== cat);
-            await saveCategoriesToCloud();
-            renderExistingCategoriesList();
-            renderMindmapOrbit();
-        }
-
-        function openCategoryManager() {
-            renderExistingCategoriesList();
-            document.getElementById('categoryModal').classList.remove('hidden');
-        }
-        function closeCategoryManager() { document.getElementById('categoryModal').classList.add('hidden'); }
-
-        function renderExistingCategoriesList() {
-            const list = document.getElementById('existingCategoriesList');
-            if (!list) return;
-            list.innerHTML = categories.map(c => `
-                <div class="flex items-center justify-between bg-slate-950 border border-slate-800 px-3 py-2 rounded-xl text-xs text-slate-200">
-                    <span class="font-semibold">${c}</span>
-                    <button onclick="deleteCategory('${c}')" class="text-rose-400 hover:text-rose-300 font-bold px-2 py-0.5">×</button>
+            return `
+                <div class="bg-slate-950 border border-slate-800 p-3 rounded-lg space-y-2 relative group">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <div class="flex items-center space-x-1.5 mb-1">
+                                <h5 class="text-xs font-bold text-white">${l.name}</h5>
+                                <span class="text-[9px] px-1.5 py-0.5 rounded border ${tempColor}">${tempEmoji}</span>
+                            </div>
+                            <span class="text-[10px] text-emerald-400 font-medium">${l.contact}</span>
+                        </div>
+                        <div class="flex items-center space-x-1">
+                            <button onclick="openEditCrmLeadModal('${l.id}')" class="text-slate-400 hover:text-white text-xs" title="Edit">✏️</button>
+                            <button onclick="deleteCrmLead('${l.id}')" class="text-slate-600 hover:text-rose-400 text-xs">×</button>
+                        </div>
+                    </div>
+                    <div class="text-[10px] text-slate-400 space-y-0.5 pt-1 border-t border-slate-900">
+                        <div>📅 Inquiry: ${l.inquiryDate || 'N/A'}</div>
+                        <div>🔍 Source: ${l.source || 'Direct'} | ⏰ Slot: ${l.preferredTime || 'Any'}</div>
+                        <div>📞 Mode: ${l.interactionType || 'Over Call'}</div>
+                        <div>💳 Payment: <span class="${l.paymentStatus === 'Paid / Received' ? 'text-emerald-400 font-bold' : 'text-amber-400'}">${l.paymentStatus || 'Pending'}</span></div>
+                        ${l.followUpDate ? `<div class="text-indigo-400 font-medium">🔔 Follow-up: ${l.followUpDate}</div>` : ''}
+                        ${l.basicInfo ? `<div class="text-slate-300 italic mt-1 bg-slate-900 p-1.5 rounded">"${l.basicInfo}"</div>` : ''}
+                    </div>
                 </div>
-            `).join('');
+            `;
         }
 
-        // Modal Handlers
+        function openCrmLeadModal() {
+            document.getElementById('editingLeadId').value = '';
+            document.getElementById('crmModalTitle').innerText = 'Add New Lead / Inquiry';
+            document.getElementById('leadPipeline').value = activeCrmTab;
+            updateStageDropdown();
+            document.getElementById('leadStage').value = activeCrmTab === 'skills' ? 'inquiry' : 'inquiry';
+            document.getElementById('leadName').value = '';
+            document.getElementById('leadContact').value = '';
+            document.getElementById('leadTemperature').value = 'Warm';
+            document.getElementById('leadInquiryDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('leadSource').value = '';
+            document.getElementById('leadPreferredTime').value = '';
+            document.getElementById('leadBasicInfo').value = '';
+            document.getElementById('leadNotes').value = '';
+            document.getElementById('crmModal').classList.remove('hidden');
+        }
+
+        function openEditCrmLeadModal(id) {
+            const lead = crmLeads.find(l => l.id === id);
+            if (!lead) return;
+            document.getElementById('editingLeadId').value = lead.id;
+            document.getElementById('crmModalTitle').innerText = 'Edit Lead Details';
+            document.getElementById('leadPipeline').value = lead.pipeline || 'skills';
+            updateStageDropdown();
+            document.getElementById('leadStage').value = lead.stage || 'inquiry';
+            document.getElementById('leadName').value = lead.name || '';
+            document.getElementById('leadContact').value = lead.contact || '';
+            document.getElementById('leadTemperature').value = lead.temperature || 'Warm';
+            document.getElementById('leadInquiryDate').value = lead.inquiryDate || '';
+            document.getElementById('leadSource').value = lead.source || '';
+            document.getElementById('leadPreferredTime').value = lead.preferredTime || '';
+            document.getElementById('leadInteractionType').value = lead.interactionType || 'Over Call';
+            document.getElementById('leadPaymentStatus').value = lead.paymentStatus || 'Pending';
+            document.getElementById('leadFollowUpDate').value = lead.followUpDate || '';
+            document.getElementById('leadBasicInfo').value = lead.basicInfo || '';
+            document.getElementById('leadNotes').value = lead.notes || '';
+            document.getElementById('crmModal').classList.remove('hidden');
+        }
+
+        async function saveCrmLeadForm(e) {
+            e.preventDefault();
+            const id = document.getElementById('editingLeadId').value || Date.now().toString();
+            const pipeline = document.getElementById('leadPipeline').value;
+            const stage = document.getElementById('leadStage').value;
+            const name = document.getElementById('leadName').value;
+            const contact = document.getElementById('leadContact').value;
+            const temperature = document.getElementById('leadTemperature').value;
+            const inquiryDate = document.getElementById('leadInquiryDate').value;
+            const source = document.getElementById('leadSource').value;
+            const preferredTime = document.getElementById('leadPreferredTime').value;
+            const interactionType = document.getElementById('leadInteractionType').value;
+            const paymentStatus = document.getElementById('leadPaymentStatus').value;
+            const followUpDate = document.getElementById('leadFollowUpDate').value;
+            const basicInfo = document.getElementById('leadBasicInfo').value;
+            const notes = document.getElementById('leadNotes').value;
+
+            const leadObj = {
+                id, pipeline, stage, name, contact, temperature, inquiryDate, source, preferredTime, interactionType, paymentStatus, followUpDate, basicInfo, notes
+            };
+
+            await saveCrmLeadToCloud(leadObj);
+            closeCrmLeadModal();
+        }
+
+        function exportCrmLeadsCsv() {
+            if (crmLeads.length === 0) {
+                alert("No CRM leads available to export.");
+                return;
+            }
+
+            const headers = ["ID", "Pipeline", "Stage", "Name", "Contact", "Temperature", "Inquiry Date", "Source", "Preferred Time", "Interaction Type", "Payment Status", "Follow-up Date", "Basic Info", "Notes"];
+            let csvRows = [headers.join(",")];
+
+            crmLeads.forEach(l => {
+                const row = [
+                    l.id,
+                    l.pipeline,
+                    l.stage,
+                    `"${(l.name || '').replace(/"/g, '""')}"`,
+                    `"${(l.contact || '').replace(/"/g, '""')}"`,
+                    l.temperature || 'Warm',
+                    l.inquiryDate || '',
+                    `"${(l.source || '').replace(/"/g, '""')}"`,
+                    `"${(l.preferredTime || '').replace(/"/g, '""')}"`,
+                    l.interactionType || '',
+                    l.paymentStatus || '',
+                    l.followUpDate || '',
+                    `"${(l.basicInfo || '').replace(/"/g, '""')}"`,
+                    `"${(l.notes || '').replace(/"/g, '""')}"`
+                ];
+                csvRows.push(row.join(","));
+            });
+
+            const csvBlob = new Blob([csvRows.join("\n")], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(csvBlob);
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", url);
+            downloadAnchor.setAttribute("download", `analyticall-chefs-crm-leads-${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function openCrmLeadModal() {
+            document.getElementById('editingLeadId').value = '';
+            document.getElementById('crmModalTitle').innerText = 'Add New Lead / Inquiry';
+            document.getElementById('leadPipeline').value = activeCrmTab;
+            updateStageDropdown();
+            document.getElementById('leadStage').value = activeCrmTab === 'skills' ? 'inquiry' : 'inquiry';
+            document.getElementById('leadName').value = '';
+            document.getElementById('leadContact').value = '';
+            document.getElementById('leadInquiryDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('leadSource').value = '';
+            document.getElementById('leadPreferredTime').value = '';
+            document.getElementById('leadBasicInfo').value = '';
+            document.getElementById('leadNotes').value = '';
+            document.getElementById('crmModal').classList.remove('hidden');
+        }
+
+        function openEditCrmLeadModal(id) {
+            const lead = crmLeads.find(l => l.id === id);
+            if (!lead) return;
+            document.getElementById('editingLeadId').value = lead.id;
+            document.getElementById('crmModalTitle').innerText = 'Edit Lead Details';
+            document.getElementById('leadPipeline').value = lead.pipeline || 'skills';
+            updateStageDropdown();
+            document.getElementById('leadStage').value = lead.stage || 'inquiry';
+            document.getElementById('leadName').value = lead.name || '';
+            document.getElementById('leadContact').value = lead.contact || '';
+            document.getElementById('leadInquiryDate').value = lead.inquiryDate || '';
+            document.getElementById('leadSource').value = lead.source || '';
+            document.getElementById('leadPreferredTime').value = lead.preferredTime || '';
+            document.getElementById('leadInteractionType').value = lead.interactionType || 'Over Call';
+            document.getElementById('leadPaymentStatus').value = lead.paymentStatus || 'Pending';
+            document.getElementById('leadFollowUpDate').value = lead.followUpDate || '';
+            document.getElementById('leadBasicInfo').value = lead.basicInfo || '';
+            document.getElementById('leadNotes').value = lead.notes || '';
+            document.getElementById('crmModal').classList.remove('hidden');
+        }
+
+        function closeCrmLeadModal() { document.getElementById('crmModal').classList.add('hidden'); }
+
+        function updateStageDropdown() {
+            const pipeline = document.getElementById('leadPipeline').value;
+            const stageSel = document.getElementById('leadStage');
+            const stages = pipeline === 'skills' ? skillsStages : abroadStages;
+            stageSel.innerHTML = stages.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+        }
+
+        async function saveCrmLeadForm(e) {
+            e.preventDefault();
+            const id = document.getElementById('editingLeadId').value || Date.now().toString();
+            const pipeline = document.getElementById('leadPipeline').value;
+            const stage = document.getElementById('leadStage').value;
+            const name = document.getElementById('leadName').value;
+            const contact = document.getElementById('leadContact').value;
+            const inquiryDate = document.getElementById('leadInquiryDate').value;
+            const source = document.getElementById('leadSource').value;
+            const preferredTime = document.getElementById('leadPreferredTime').value;
+            const interactionType = document.getElementById('leadInteractionType').value;
+            const paymentStatus = document.getElementById('leadPaymentStatus').value;
+            const followUpDate = document.getElementById('leadFollowUpDate').value;
+            const basicInfo = document.getElementById('leadBasicInfo').value;
+            const notes = document.getElementById('leadNotes').value;
+
+            const leadObj = {
+                id, pipeline, stage, name, contact, inquiryDate, source, preferredTime, interactionType, paymentStatus, followUpDate, basicInfo, notes
+            };
+
+            await saveCrmLeadToCloud(leadObj);
+            closeCrmLeadModal();
+        }
+
+        async function deleteCrmLead(id) { await deleteCrmLeadFromCloud(id); }
+
         function openTodoModal() {
             document.getElementById('editingTodoId').value = '';
-            document.getElementById('todoModalTitle').value = '';
-            document.getElementById('todoModalDesc').value = '';
+            document.getElementById('todoModalTitle').innerText = 'Add Task (3-3-3 Rule)';
+            document.getElementById('todoModalInputTitle').value = '';
+            document.getElementById('todoModalTypeSlot').value = '3 Hours Deep Work';
+            document.getElementById('todoModalPriority').value = 'Medium';
             document.getElementById('todoModalDeadline').value = '';
+            document.getElementById('todoModalDesc').value = '';
             document.getElementById('todoModal').classList.remove('hidden');
         }
 
@@ -853,14 +1205,15 @@
         }
 
         function openEditTodoModal(id) {
-            const t = todos.find(item => item.id === id);
-            if (!t) return;
-            document.getElementById('editingTodoId').value = t.id;
-            document.getElementById('todoModalInputTitle').value = t.title || '';
-            document.getElementById('todoModalTypeSlot').value = t.typeSlot || '3 Hours Deep Work';
-            document.getElementById('todoModalPriority').value = t.priority || 'High';
-            document.getElementById('todoModalDeadline').value = t.deadline || '';
-            document.getElementById('todoModalDesc').value = t.desc || '';
+            const task = todos.find(t => t.id === id);
+            if (!task) return;
+            document.getElementById('editingTodoId').value = task.id;
+            document.getElementById('todoModalTitle').innerText = 'Edit Task Details';
+            document.getElementById('todoModalInputTitle').value = task.title || '';
+            document.getElementById('todoModalTypeSlot').value = task.typeSlot || '3 Hours Deep Work';
+            document.getElementById('todoModalPriority').value = task.priority || 'Medium';
+            document.getElementById('todoModalDeadline').value = task.deadline || '';
+            document.getElementById('todoModalDesc').value = task.desc || '';
             document.getElementById('todoModal').classList.remove('hidden');
         }
 
@@ -876,39 +1229,64 @@
             const desc = document.getElementById('todoModalDesc').value;
 
             const existing = todos.find(t => t.id === id);
-            const taskObj = {
+            const todoObj = {
                 id,
-                title,
                 business: activeDepartment,
+                title,
                 typeSlot,
                 priority,
                 deadline,
                 desc,
                 completed: existing ? existing.completed : false,
-                archived: existing ? existing.archived : false,
-                completedDate: existing ? existing.completedDate : ''
+                completedDate: existing ? existing.completedDate : null,
+                archived: existing ? existing.archived : false
             };
 
-            await saveTodoToCloud(taskObj);
+            await saveTodoToCloud(todoObj);
             closeTodoModal();
         }
 
+        async function toggleTodo(id) {
+            const task = todos.find(t => t.id === id);
+            if (task) {
+                task.completed = !task.completed;
+                const todayStr = new Date().toISOString().split('T')[0];
+                task.completedDate = task.completed ? todayStr : null;
+                await saveTodoToCloud(task);
+            }
+        }
+
+        async function restoreTodo(id) {
+            const task = todos.find(t => t.id === id);
+            if (task) {
+                task.archived = false;
+                task.completed = false;
+                task.completedDate = null;
+                await saveTodoToCloud(task);
+            }
+        }
+
+        async function deleteTodo(id) { await deleteTodoFromCloud(id); }
+
         function openIdeaModal() {
             document.getElementById('editingIdeaId').value = '';
+            document.getElementById('ideaModalTitle').innerText = 'Capture Idea & Google Doc';
             document.getElementById('ideaModalInputTitle').value = '';
+            document.getElementById('ideaModalStatus').value = 'Idea';
             document.getElementById('ideaModalDocLink').value = '';
             document.getElementById('ideaModalNotes').value = '';
             document.getElementById('ideaModal').classList.remove('hidden');
         }
 
         function openEditIdeaModal(id) {
-            const i = ideas.find(item => item.id === id);
-            if (!i) return;
-            document.getElementById('editingIdeaId').value = i.id;
-            document.getElementById('ideaModalInputTitle').value = i.title || '';
-            document.getElementById('ideaModalStatus').value = i.status || 'Idea';
-            document.getElementById('ideaModalDocLink').value = i.docLink || '';
-            document.getElementById('ideaModalNotes').value = i.notes || '';
+            const idea = ideas.find(i => i.id === id);
+            if (!idea) return;
+            document.getElementById('editingIdeaId').value = idea.id;
+            document.getElementById('ideaModalTitle').innerText = 'Edit Idea & Google Doc';
+            document.getElementById('ideaModalInputTitle').value = idea.title || '';
+            document.getElementById('ideaModalStatus').value = idea.status || 'Idea';
+            document.getElementById('ideaModalDocLink').value = idea.docLink || '';
+            document.getElementById('ideaModalNotes').value = idea.notes || '';
             document.getElementById('ideaModal').classList.remove('hidden');
         }
 
@@ -935,6 +1313,51 @@
 
             await saveIdeaToCloud(ideaObj);
             closeIdeaModal();
+        }
+
+        async function deleteIdea(id) { await deleteIdeaFromCloud(id); }
+
+        function openCategoryManager() {
+            renderExistingCategoriesList();
+            document.getElementById('categoryModal').classList.remove('hidden');
+        }
+
+        function closeCategoryManager() {
+            document.getElementById('categoryModal').classList.add('hidden');
+        }
+
+        async function addNewCategory() {
+            const input = document.getElementById('newCategoryInput');
+            const val = input.value.trim();
+            if (val && !categories.includes(val)) {
+                categories.push(val);
+                input.value = '';
+                await saveCategoriesToCloud();
+                renderExistingCategoriesList();
+                refreshActiveView();
+            }
+        }
+
+        async function removeCategory(cat) {
+            if (categories.length <= 1) {
+                alert("You must keep at least one department node.");
+                return;
+            }
+            categories = categories.filter(c => c !== cat);
+            await saveCategoriesToCloud();
+            renderExistingCategoriesList();
+            refreshActiveView();
+        }
+
+        function renderExistingCategoriesList() {
+            const list = document.getElementById('existingCategoriesList');
+            if (!list) return;
+            list.innerHTML = categories.map(c => `
+                <div class="flex items-center justify-between bg-slate-950 border border-slate-800 px-3 py-2 rounded-xl text-xs text-slate-200">
+                    <span class="font-medium">${c}</span>
+                    <button onclick="removeCategory('${c}')" class="text-rose-400 hover:text-rose-300 font-bold px-2 py-0.5">×</button>
+                </div>
+            `).join('');
         }
 
         // Weekly Accountability Report (Monday - Sunday)
@@ -1007,11 +1430,6 @@
                 window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
             }
         }
-
-        window.onload = function() {
-            // Initial render on load
-            refreshActiveView();
-        };
     </script>
 </body>
 </html>
