@@ -986,13 +986,19 @@
             const tempColor = temp === 'Hot' ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' : temp === 'Cold' ? 'bg-sky-500/20 text-sky-300 border-sky-500/40' : 'bg-amber-500/20 text-amber-300 border-amber-500/40';
             const tempEmoji = temp === 'Hot' ? '🔥 Hot' : temp === 'Cold' ? '❄️ Cold' : '☀️ Warm';
 
+            const calledStatus = l.calledStatus || 'Not Called';
+            const calledColor = calledStatus === 'Called' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border-rose-500/40';
+
             return `
                 <div class="bg-slate-950 border border-slate-800 p-3 rounded-lg space-y-2 relative group">
                     <div class="flex items-start justify-between">
                         <div>
-                            <div class="flex items-center space-x-1.5 mb-1">
+                            <div class="flex items-center space-x-1.5 mb-1 flex-wrap gap-y-1">
                                 <h5 class="text-xs font-bold text-white">${l.name}</h5>
                                 <span class="text-[9px] px-1.5 py-0.5 rounded border ${tempColor}">${tempEmoji}</span>
+                                <button onclick="toggleLeadCalledStatus('${l.id}')" class="text-[9px] px-2 py-0.5 rounded border ${calledColor} font-semibold transition hover:opacity-80" title="Click to toggle call status">
+                                    ${calledStatus === 'Called' ? '📞 Called' : '❌ Not Called'}
+                                </button>
                             </div>
                             <span class="text-[10px] text-emerald-400 font-medium">${l.contact}</span>
                         </div>
@@ -1011,6 +1017,14 @@
                     </div>
                 </div>
             `;
+        }
+
+        async function toggleLeadCalledStatus(id) {
+            const lead = crmLeads.find(l => l.id === id);
+            if (lead) {
+                lead.calledStatus = (lead.calledStatus === 'Called') ? 'Not Called' : 'Called';
+                await saveCrmLeadToCloud(lead);
+            }
         }
 
         function openCrmLeadModal() {
@@ -1069,8 +1083,23 @@
             const basicInfo = document.getElementById('leadBasicInfo').value;
             const notes = document.getElementById('leadNotes').value;
 
+            const existing = crmLeads.find(l => l.id === id);
             const leadObj = {
-                id, pipeline, stage, name, contact, temperature, inquiryDate, source, preferredTime, interactionType, paymentStatus, followUpDate, basicInfo, notes
+                id,
+                pipeline,
+                stage,
+                name,
+                contact,
+                temperature,
+                inquiryDate,
+                source,
+                preferredTime,
+                interactionType,
+                paymentStatus,
+                followUpDate,
+                basicInfo,
+                notes,
+                calledStatus: existing ? (existing.calledStatus || 'Not Called') : 'Not Called'
             };
 
             await saveCrmLeadToCloud(leadObj);
