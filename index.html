@@ -365,11 +365,12 @@
                 </div>
                 <div class="grid grid-cols-3 gap-3">
                     <div>
-                        <label class="block text-xs font-medium text-slate-400 mb-1">Interaction Type</label>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Interaction Type / Mode</label>
                         <select id="leadInteractionType" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none">
-                            <option value="Over Call">Over Call</option>
-                            <option value="Office Visit">Office Visit</option>
-                            <option value="Online Chat">Online Chat</option>
+                            <option value="Not Contacted">❌ Not Contacted</option>
+                            <option value="Over Call">📞 Over Call</option>
+                            <option value="Office Visit">🏢 Office Visit</option>
+                            <option value="Email">✉️ Email</option>
                         </select>
                     </div>
                     <div>
@@ -986,8 +987,8 @@
             const tempColor = temp === 'Hot' ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' : temp === 'Cold' ? 'bg-sky-500/20 text-sky-300 border-sky-500/40' : 'bg-amber-500/20 text-amber-300 border-amber-500/40';
             const tempEmoji = temp === 'Hot' ? '🔥 Hot' : temp === 'Cold' ? '❄️ Cold' : '☀️ Warm';
 
-            const calledStatus = l.calledStatus || 'Not Called';
-            const calledColor = calledStatus === 'Called' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border-rose-500/40';
+            const mode = l.interactionType || 'Not Contacted';
+            const modeColor = mode === 'Not Contacted' ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
 
             return `
                 <div class="bg-slate-950 border border-slate-800 p-3 rounded-lg space-y-2 relative group">
@@ -996,9 +997,9 @@
                             <div class="flex items-center space-x-1.5 mb-1 flex-wrap gap-y-1">
                                 <h5 class="text-xs font-bold text-white">${l.name}</h5>
                                 <span class="text-[9px] px-1.5 py-0.5 rounded border ${tempColor}">${tempEmoji}</span>
-                                <button onclick="toggleLeadCalledStatus('${l.id}')" class="text-[9px] px-2 py-0.5 rounded border ${calledColor} font-semibold transition hover:opacity-80" title="Click to toggle call status">
-                                    ${calledStatus === 'Called' ? '📞 Called' : '❌ Not Called'}
-                                </button>
+                                <span class="text-[9px] px-2 py-0.5 rounded border ${modeColor} font-semibold">
+                                    ${mode === 'Not Contacted' ? '❌ Not Contacted' : '📞 ' + mode}
+                                </span>
                             </div>
                             <span class="text-[10px] text-emerald-400 font-medium">${l.contact}</span>
                         </div>
@@ -1010,7 +1011,6 @@
                     <div class="text-[10px] text-slate-400 space-y-0.5 pt-1 border-t border-slate-900">
                         <div>📅 Inquiry: ${l.inquiryDate || 'N/A'}</div>
                         <div>🔍 Source: ${l.source || 'Direct'} | ⏰ Slot: ${l.preferredTime || 'Any'}</div>
-                        <div>📞 Mode: ${l.interactionType || 'Over Call'}</div>
                         <div>💳 Payment: <span class="${l.paymentStatus === 'Paid / Received' ? 'text-emerald-400 font-bold' : 'text-amber-400'}">${l.paymentStatus || 'Pending'}</span></div>
                         ${l.followUpDate ? `<div class="text-indigo-400 font-medium">🔔 Follow-up: ${l.followUpDate}</div>` : ''}
                         ${l.basicInfo ? `<div class="text-slate-300 italic mt-1 bg-slate-900 p-1.5 rounded">"${l.basicInfo}"</div>` : ''}
@@ -1019,12 +1019,13 @@
             `;
         }
 
-        async function toggleLeadCalledStatus(id) {
-            const lead = crmLeads.find(l => l.id === id);
-            if (lead) {
-                lead.calledStatus = (lead.calledStatus === 'Called') ? 'Not Called' : 'Called';
-                await saveCrmLeadToCloud(lead);
-            }
+        function updateStageDropdown() {
+            const pipelineVal = document.getElementById('leadPipeline').value;
+            const stageSelect = document.getElementById('leadStage');
+            if (!stageSelect) return;
+
+            const stages = pipelineVal === 'skills' ? skillsStages : abroadStages;
+            stageSelect.innerHTML = stages.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
         }
 
         function openCrmLeadModal() {
@@ -1036,12 +1037,17 @@
             document.getElementById('leadName').value = '';
             document.getElementById('leadContact').value = '';
             document.getElementById('leadTemperature').value = 'Warm';
+            document.getElementById('leadInteractionType').value = 'Not Contacted';
             document.getElementById('leadInquiryDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('leadSource').value = '';
             document.getElementById('leadPreferredTime').value = '';
             document.getElementById('leadBasicInfo').value = '';
             document.getElementById('leadNotes').value = '';
             document.getElementById('crmModal').classList.remove('hidden');
+        }
+
+        function closeCrmLeadModal() {
+            document.getElementById('crmModal').classList.add('hidden');
         }
 
         function openEditCrmLeadModal(id) {
@@ -1058,7 +1064,7 @@
             document.getElementById('leadInquiryDate').value = lead.inquiryDate || '';
             document.getElementById('leadSource').value = lead.source || '';
             document.getElementById('leadPreferredTime').value = lead.preferredTime || '';
-            document.getElementById('leadInteractionType').value = lead.interactionType || 'Over Call';
+            document.getElementById('leadInteractionType').value = lead.interactionType || 'Not Contacted';
             document.getElementById('leadPaymentStatus').value = lead.paymentStatus || 'Pending';
             document.getElementById('leadFollowUpDate').value = lead.followUpDate || '';
             document.getElementById('leadBasicInfo').value = lead.basicInfo || '';
@@ -1100,115 +1106,6 @@
                 basicInfo,
                 notes,
                 calledStatus: existing ? (existing.calledStatus || 'Not Called') : 'Not Called'
-            };
-
-            await saveCrmLeadToCloud(leadObj);
-            closeCrmLeadModal();
-        }
-
-        function exportCrmLeadsCsv() {
-            if (crmLeads.length === 0) {
-                alert("No CRM leads available to export.");
-                return;
-            }
-
-            const headers = ["ID", "Pipeline", "Stage", "Name", "Contact", "Temperature", "Inquiry Date", "Source", "Preferred Time", "Interaction Type", "Payment Status", "Follow-up Date", "Basic Info", "Notes"];
-            let csvRows = [headers.join(",")];
-
-            crmLeads.forEach(l => {
-                const row = [
-                    l.id,
-                    l.pipeline,
-                    l.stage,
-                    `"${(l.name || '').replace(/"/g, '""')}"`,
-                    `"${(l.contact || '').replace(/"/g, '""')}"`,
-                    l.temperature || 'Warm',
-                    l.inquiryDate || '',
-                    `"${(l.source || '').replace(/"/g, '""')}"`,
-                    `"${(l.preferredTime || '').replace(/"/g, '""')}"`,
-                    l.interactionType || '',
-                    l.paymentStatus || '',
-                    l.followUpDate || '',
-                    `"${(l.basicInfo || '').replace(/"/g, '""')}"`,
-                    `"${(l.notes || '').replace(/"/g, '""')}"`
-                ];
-                csvRows.push(row.join(","));
-            });
-
-            const csvBlob = new Blob([csvRows.join("\n")], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(csvBlob);
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", url);
-            downloadAnchor.setAttribute("download", `analyticall-chefs-crm-leads-${new Date().toISOString().split('T')[0]}.csv`);
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
-        }
-
-        function openCrmLeadModal() {
-            document.getElementById('editingLeadId').value = '';
-            document.getElementById('crmModalTitle').innerText = 'Add New Lead / Inquiry';
-            document.getElementById('leadPipeline').value = activeCrmTab;
-            updateStageDropdown();
-            document.getElementById('leadStage').value = activeCrmTab === 'skills' ? 'inquiry' : 'inquiry';
-            document.getElementById('leadName').value = '';
-            document.getElementById('leadContact').value = '';
-            document.getElementById('leadInquiryDate').value = new Date().toISOString().split('T')[0];
-            document.getElementById('leadSource').value = '';
-            document.getElementById('leadPreferredTime').value = '';
-            document.getElementById('leadBasicInfo').value = '';
-            document.getElementById('leadNotes').value = '';
-            document.getElementById('crmModal').classList.remove('hidden');
-        }
-
-        function openEditCrmLeadModal(id) {
-            const lead = crmLeads.find(l => l.id === id);
-            if (!lead) return;
-            document.getElementById('editingLeadId').value = lead.id;
-            document.getElementById('crmModalTitle').innerText = 'Edit Lead Details';
-            document.getElementById('leadPipeline').value = lead.pipeline || 'skills';
-            updateStageDropdown();
-            document.getElementById('leadStage').value = lead.stage || 'inquiry';
-            document.getElementById('leadName').value = lead.name || '';
-            document.getElementById('leadContact').value = lead.contact || '';
-            document.getElementById('leadInquiryDate').value = lead.inquiryDate || '';
-            document.getElementById('leadSource').value = lead.source || '';
-            document.getElementById('leadPreferredTime').value = lead.preferredTime || '';
-            document.getElementById('leadInteractionType').value = lead.interactionType || 'Over Call';
-            document.getElementById('leadPaymentStatus').value = lead.paymentStatus || 'Pending';
-            document.getElementById('leadFollowUpDate').value = lead.followUpDate || '';
-            document.getElementById('leadBasicInfo').value = lead.basicInfo || '';
-            document.getElementById('leadNotes').value = lead.notes || '';
-            document.getElementById('crmModal').classList.remove('hidden');
-        }
-
-        function closeCrmLeadModal() { document.getElementById('crmModal').classList.add('hidden'); }
-
-        function updateStageDropdown() {
-            const pipeline = document.getElementById('leadPipeline').value;
-            const stageSel = document.getElementById('leadStage');
-            const stages = pipeline === 'skills' ? skillsStages : abroadStages;
-            stageSel.innerHTML = stages.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-        }
-
-        async function saveCrmLeadForm(e) {
-            e.preventDefault();
-            const id = document.getElementById('editingLeadId').value || Date.now().toString();
-            const pipeline = document.getElementById('leadPipeline').value;
-            const stage = document.getElementById('leadStage').value;
-            const name = document.getElementById('leadName').value;
-            const contact = document.getElementById('leadContact').value;
-            const inquiryDate = document.getElementById('leadInquiryDate').value;
-            const source = document.getElementById('leadSource').value;
-            const preferredTime = document.getElementById('leadPreferredTime').value;
-            const interactionType = document.getElementById('leadInteractionType').value;
-            const paymentStatus = document.getElementById('leadPaymentStatus').value;
-            const followUpDate = document.getElementById('leadFollowUpDate').value;
-            const basicInfo = document.getElementById('leadBasicInfo').value;
-            const notes = document.getElementById('leadNotes').value;
-
-            const leadObj = {
-                id, pipeline, stage, name, contact, inquiryDate, source, preferredTime, interactionType, paymentStatus, followUpDate, basicInfo, notes
             };
 
             await saveCrmLeadToCloud(leadObj);
